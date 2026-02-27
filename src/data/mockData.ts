@@ -96,12 +96,12 @@ export const mockChallenges: Challenge[] = [
 ];
 
 export const mockLeaderboard: LeaderboardEntry[] = [
-  { rank: 1, userId: '4', userName: 'Mike Johnson', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Mike', totalSolved: 245, currentStreak: 28, missedDays: 2, penaltyAmount: 10 },
-  { rank: 2, userId: '2', userName: 'Sarah Miller', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah', totalSolved: 198, currentStreak: 21, missedDays: 5, penaltyAmount: 25 },
-  { rank: 3, userId: '1', userName: 'Alex Chen', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex', totalSolved: 156, currentStreak: 14, missedDays: 5, penaltyAmount: 25 },
-  { rank: 4, userId: '5', userName: 'Emily Wang', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Emily', totalSolved: 134, currentStreak: 7, missedDays: 8, penaltyAmount: 40 },
-  { rank: 5, userId: '3', userName: 'John Doe', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John', totalSolved: 89, currentStreak: 3, missedDays: 15, penaltyAmount: 75 },
-  { rank: 6, userId: '6', userName: 'David Kim', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=David', totalSolved: 67, currentStreak: 0, missedDays: 20, penaltyAmount: 100 }
+  { rank: 1, userId: '4', userName: 'Mike Johnson', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Mike', totalSolved: 245, currentStreak: 28, longestStreak: 45, missedDays: 2, penaltyAmount: 10 },
+  { rank: 2, userId: '2', userName: 'Sarah Miller', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah', totalSolved: 198, currentStreak: 21, longestStreak: 30, missedDays: 5, penaltyAmount: 25 },
+  { rank: 3, userId: '1', userName: 'Alex Chen', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex', totalSolved: 156, currentStreak: 14, longestStreak: 30, missedDays: 5, penaltyAmount: 25 },
+  { rank: 4, userId: '5', userName: 'Emily Wang', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Emily', totalSolved: 134, currentStreak: 7, longestStreak: 18, missedDays: 8, penaltyAmount: 40 },
+  { rank: 5, userId: '3', userName: 'John Doe', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John', totalSolved: 89, currentStreak: 3, longestStreak: 12, missedDays: 15, penaltyAmount: 75 },
+  { rank: 6, userId: '6', userName: 'David Kim', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=David', totalSolved: 67, currentStreak: 0, longestStreak: 5, missedDays: 20, penaltyAmount: 100 }
 ];
 
 // Generate activity data for heatmap (last 365 days)

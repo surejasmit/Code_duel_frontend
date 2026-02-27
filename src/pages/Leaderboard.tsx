@@ -1,56 +1,43 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Trophy, Medal, Award, TrendingUp, Loader2 } from 'lucide-react';
+import { ArrowLeft, Trophy, Medal, Award, TrendingUp } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import Layout from '@/components/layout/Layout';
 import LeaderboardTable from '@/components/leaderboard/LeaderboardTable';
-import { dashboardApi } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { LeaderboardEntry } from '@/types';
+import { useLeaderboard } from '@/hooks/useLeaderboard';
+import { mockLeaderboard } from '@/data/mockData';
+import type { RankableUser } from '@/utils/leaderboardEngine';
 
 const Leaderboard: React.FC = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
-  const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  
+  // Remove rank property from mock data since hook will calculate it
+  const rawLeaderboardData: RankableUser[] = mockLeaderboard.map(({ rank, ...rest }) => rest) as RankableUser[];
 
-  useEffect(() => {
-    loadLeaderboard();
-  }, []);
+  // Use the dynamic leaderboard hook for client-side ranking
+  const { 
+    rankedEntries, 
+    topThree,
+    totalEntries,
+  } = useLeaderboard(rawLeaderboardData, {
+    currentUserId: user?.id,
+    trackChanges: false,
+    enableSearch: false,
+    enablePagination: false,
+  });
 
-  const loadLeaderboard = async () => {
-    setIsLoading(true);
-    try {
-      const response = await dashboardApi.getGlobalLeaderboard();
-      if (response.success && response.data) {
-        setLeaderboardData(response.data);
-      } else {
-        throw new Error(response.message || 'Failed to fetch leaderboard data');
-      }
-    } catch (error) {
-      console.error('Failed to load leaderboard:', error);
-      toast({
-        title: 'Error loading leaderboard',
-        description: 'Could not fetch the latest rankings. Please try again later.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const topThree = leaderboardData.slice(0, 3);
-
-  const totalSolved = leaderboardData.reduce((acc, e) => acc + (e.totalSolved || 0), 0);
-  const longestStreak = leaderboardData.length > 0 ? Math.max(...leaderboardData.map(e => e.currentStreak || 0)) : 0;
-  const totalPenalties = leaderboardData.reduce((acc, e) => acc + (e.penaltyAmount || 0), 0);
+  // Calculate stats from ranked entries
+  const totalSolved = rankedEntries.reduce((acc, e) => acc + (e.totalSolved || 0), 0);
+  const longestStreak = rankedEntries.length > 0 
+    ? Math.max(...rankedEntries.map(e => e.longestStreak || e.currentStreak || 0)) 
+    : 0;
+  const totalPenalties = rankedEntries.reduce((acc, e) => acc + (e.penaltyAmount || 0), 0);
 
   return (
-    <Layout>
-      <div className="space-y-8">
+    <div className="min-h-screen bg-background p-8">
+      <div className="max-w-7xl mx-auto space-y-8">
         {/* Back Button */}
         <Button variant="ghost" size="sm" asChild className="gap-2">
           <Link to="/">
@@ -61,19 +48,13 @@ const Leaderboard: React.FC = () => {
 
         {/* Header */}
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold">
-            <span className="gradient-text">Leaderboard</span>
-          </h1>
+          <h1 className="text-3xl font-bold">Leaderboard</h1>
           <p className="text-muted-foreground">
             See who's leading the pack in solving problems
           </p>
         </div>
 
-        {isLoading ? (
-          <div className="flex justify-center items-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        ) : leaderboardData.length === 0 ? (
+        {rankedEntries.length === 0 ? (
           <div className="text-center py-10 bg-muted/20 rounded-lg">
             <Trophy className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
             <h3 className="text-lg font-medium">No Data Available</h3>
@@ -152,7 +133,7 @@ const Leaderboard: React.FC = () => {
               <Card className="hover-lift">
                 <CardContent className="p-4 text-center">
                   <Trophy className="h-8 w-8 mx-auto mb-2 text-yellow-500" />
-                  <p className="text-2xl font-bold">{leaderboardData.length}</p>
+                  <p className="text-2xl font-bold">{totalEntries}</p>
                   <p className="text-sm text-muted-foreground">Participants</p>
                 </CardContent>
               </Card>
@@ -173,11 +154,11 @@ const Leaderboard: React.FC = () => {
             </div>
 
             {/* Full Leaderboard */}
-            <LeaderboardTable entries={leaderboardData} currentUserId={user?.id} />
+            <LeaderboardTable entries={rankedEntries} currentUserId={user?.id} />
           </>
         )}
       </div>
-    </Layout>
+    </div>
   );
 };
 

@@ -15,6 +15,7 @@ import Register from "./pages/Register";
 import ChallengePage from "./pages/ChallengePage";
 import CreateChallenge from "./pages/CreateChallenge";
 import Leaderboard from "./pages/Leaderboard";
+import LeaderboardTest from "./pages/LeaderboardTest";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
@@ -115,14 +116,8 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/leaderboard"
-        element={
-          <ProtectedRoute>
-            <Leaderboard />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/leaderboard" element={<Leaderboard />} />
+      <Route path="/leaderboard-test" element={<LeaderboardTest />} />
       <Route
         path="/settings"
         element={
