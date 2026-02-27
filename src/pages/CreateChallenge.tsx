@@ -257,9 +257,8 @@ const CreateChallenge: React.FC = () => {
                   <Input
                     id="startDate"
                     type="date"
-                    min={getTodayString()}
-                    value={startDate}
                     min={today}
+                    value={startDate}
                     onChange={(e) => {
                       const newStartDate = e.target.value;
                       setStartDate(newStartDate);
@@ -285,9 +284,8 @@ const CreateChallenge: React.FC = () => {
                   <Input
                     id="endDate"
                     type="date"
-                    min={startDate || getTodayString()}
-                    value={endDate}
                     min={minEndDate}
+                    value={endDate}
                     disabled={!startDate}
                     onChange={(e) => setEndDate(e.target.value)}
                     className={errors.endDate ? "border-destructive" : ""}

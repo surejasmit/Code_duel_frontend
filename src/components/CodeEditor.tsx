@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
 import Editor from "@monaco-editor/react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 export default function CodeEditor() {
   const [code, setCode] = useState<string>("// Start coding here...");
@@ -50,8 +57,8 @@ export default function CodeEditor() {
     // Ctrl + Shift + F → Format
     editor.addCommand(
       monaco.KeyMod.CtrlCmd |
-        monaco.KeyMod.Shift |
-        monaco.KeyCode.KeyF,
+      monaco.KeyMod.Shift |
+      monaco.KeyCode.KeyF,
       () => {
         editor.getAction("editor.action.formatDocument").run();
       }
@@ -60,22 +67,26 @@ export default function CodeEditor() {
 
   return (
     <div style={{ padding: "20px" }}>
-      <h2>Live Code Duel</h2>
+      <h2 className="text-2xl font-bold mb-4">Live Code Duel</h2>
 
       {/* 🔹 Shortcut Info */}
       <div style={{ fontSize: "14px", color: "gray", marginBottom: "8px" }}>
         Shortcuts: Ctrl+Enter (Run) | Ctrl+S (Save) | Ctrl+Shift+F (Format)
       </div>
 
-      <select
-        value={language}
-        onChange={(e) => setLanguage(e.target.value)}
-      >
-        <option value="javascript">JavaScript</option>
-        <option value="typescript">TypeScript</option>
-        <option value="python">Python</option>
-        <option value="cpp">C++</option>
-      </select>
+      <div className="w-[180px] mb-4">
+        <Select value={language} onValueChange={setLanguage}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select Language" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="javascript">JavaScript</SelectItem>
+            <SelectItem value="typescript">TypeScript</SelectItem>
+            <SelectItem value="python">Python</SelectItem>
+            <SelectItem value="cpp">C++</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       <div style={{ marginTop: "10px" }}>
         <Editor

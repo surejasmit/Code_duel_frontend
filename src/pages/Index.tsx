@@ -63,23 +63,23 @@ const Index: React.FC = () => {
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse-slow" />
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse-slow" />
         </div>
-        
+
         <div className="container py-24 md:py-32">
           <div className="mx-auto max-w-3xl text-center space-y-8">
             <div className="inline-flex items-center gap-2 rounded-full border border-border bg-background/50 px-4 py-1.5 text-sm backdrop-blur">
               <Zap className="h-4 w-4 text-primary" />
               <span>Track. Compete. Improve.</span>
             </div>
-            
+
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
               Master LeetCode with
               <span className="block gradient-text">Daily Consistency</span>
             </h1>
-            
+
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Track your daily coding progress, compete with friends, and stay accountable with our penalty-based challenge system. Build the habit of consistent problem-solving.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button size="lg" asChild className="gradient-primary w-full sm:w-auto gap-2">
                 <Link to="/register">
@@ -119,7 +119,7 @@ const Index: React.FC = () => {
             Built for developers who want to improve their problem-solving skills through daily practice and friendly competition.
           </p>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {features.map((feature, index) => (
             <Card key={index} className="hover-lift border-2 group">

@@ -13,12 +13,15 @@ export interface Challenge {
   name: string;
   dailyTarget: number;
   difficulty: 'easy' | 'medium' | 'hard' | 'any';
-  penaltyAmount: number;
+  penaltyAmount?: number;
   startDate: string;
   endDate: string;
   createdBy: string;
   members: ChallengeMember[];
   isActive: boolean;
+  difficultyFilter?: string[];
+  status?: "ACTIVE" | "PENDING" | "COMPLETED" | "CANCELLED";
+  minSubmissionsPerDay?: number;
 }
 
 export interface ChallengeMember {
@@ -26,9 +29,7 @@ export interface ChallengeMember {
   userName: string;
   avatar?: string;
   status: 'completed' | 'failed' | 'pending';
-  streak: number;
-  totalPenalty: number;
-  dailyProgress: DailyProgress[];
+  joinedAt: string;
 }
 
 export interface DailyProgress {

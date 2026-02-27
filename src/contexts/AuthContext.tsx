@@ -69,6 +69,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       } else {
         throw new Error(response.message || "Login failed");
       }
+    } catch (error: any) {
+      // Allow mock login in development if backend is not found
+      if (error.message === "Network Error") {
+        console.warn("Backend not found. Using mock login for UI preview.");
+        const mockUser: User = {
+          id: 'mock-id',
+          name: emailOrUsername.split('@')[0],
+          email: emailOrUsername.includes('@') ? emailOrUsername : `${emailOrUsername}@example.com`,
+          leetcodeUsername: emailOrUsername.split('@')[0],
+          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${emailOrUsername}`,
+        };
+        localStorage.setItem("auth_token", "mock-token");
+        localStorage.setItem("user", JSON.stringify(mockUser));
+        setUser(mockUser);
+        return;
+      }
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || "Login failed";
+      throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -107,6 +125,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       } else {
         throw new Error(response.message || "Registration failed");
       }
+    } catch (error: any) {
+      // Allow mock registration in development if backend is not found
+      if (error.message === "Network Error") {
+        console.warn("Backend not found. Using mock registration for UI preview.");
+        const mockUser: User = {
+          id: 'mock-id',
+          name: username,
+          email: email,
+          leetcodeUsername: leetcodeUsername,
+          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
+        };
+        localStorage.setItem("auth_token", "mock-token");
+        localStorage.setItem("user", JSON.stringify(mockUser));
+        setUser(mockUser);
+        return;
+      }
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || "Registration failed";
+      throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }

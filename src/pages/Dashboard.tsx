@@ -8,6 +8,7 @@ import TodayStatus from "@/components/dashboard/TodayStatus";
 import ProgressChart from "@/components/dashboard/ProgressChart";
 import ActivityHeatmap from "@/components/dashboard/ActivityHeatmap";
 import ChallengeCard from "@/components/dashboard/ChallengeCard";
+import InviteRequests from "@/components/dashboard/InviteRequests";
 import EmptyState from "@/components/common/EmptyState";
 import { useAuth } from "@/contexts/AuthContext";
 import { dashboardApi, challengeApi } from "@/lib/api";
@@ -158,6 +159,9 @@ const Dashboard: React.FC = () => {
             variant="destructive"
           />
         </div>
+
+        {/* Invite Requests */}
+        <InviteRequests />
 
         {/* Main Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -29,13 +29,13 @@ const difficultyColors = {
 const ChallengeCard: React.FC<ChallengeCardProps> = ({ challenge }) => {
   const daysRemaining = Math.ceil(
     (new Date(challenge.endDate).getTime() - new Date().getTime()) /
-      (1000 * 60 * 60 * 24)
+    (1000 * 60 * 60 * 24)
   );
 
   const totalDays = Math.ceil(
     (new Date(challenge.endDate).getTime() -
       new Date(challenge.startDate).getTime()) /
-      (1000 * 60 * 60 * 24)
+    (1000 * 60 * 60 * 24)
   );
 
   const progress = Math.round(((totalDays - daysRemaining) / totalDays) * 100);
@@ -78,38 +78,36 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({ challenge }) => {
 
   return (
     <Link to={`/challenge/${challenge.id}`}>
-      <Card className="hover-lift cursor-pointer group">
-        <CardHeader className="pb-3">
-          <div className="flex items-start justify-between">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <CardTitle className="text-lg group-hover:text-primary transition-colors">
-                  {challenge.name}
-                </CardTitle>
-                <Badge
-                  variant="outline"
-                  className={cn("text-xs", getStatusColor(challenge.status))}
-                >
-                  {challenge.status}
-                </Badge>
-              </div>
+      <Card className="hover-lift cursor-pointer group transition-all duration-200 ease-out will-change-transform">        <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-lg group-hover:text-primary transition-colors">
+                {challenge.name}
+              </CardTitle>
               <Badge
                 variant="outline"
-                className={cn(
-                  "text-xs",
-                  difficultyColors[difficulty as keyof typeof difficultyColors]
-                )}
+                className={cn("text-xs", getStatusColor(challenge.status))}
               >
-                {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
+                {challenge.status}
               </Badge>
             </div>
-            <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+            <Badge
+              variant="outline"
+              className={cn(
+                "text-xs",
+                difficultyColors[difficulty as keyof typeof difficultyColors]
+              )}
+            >
+              {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
+            </Badge>
           </div>
-        </CardHeader>
+          <ChevronRight className="h-5 w-5 text-muted-foreground transition-all duration-200 group-hover:text-primary group-hover:translate-x-1" />        </div>
+      </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="flex items-center gap-2 text-muted-foreground">
-              <Target className="h-4 w-4" />
+              <Target className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
               <span>{challenge.minSubmissionsPerDay || 1}/day</span>
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">
@@ -133,7 +131,7 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({ challenge }) => {
               <span>Progress</span>
               <span>{progress}%</span>
             </div>
-            <Progress value={progress} className="h-2" />
+            <Progress value={progress} className="h-2 transition-all duration-300" />
           </div>
 
           <div className="flex items-center -space-x-2">

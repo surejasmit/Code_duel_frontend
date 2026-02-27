@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import React, { useState, useEffect } from "react";
 import {
   Settings as SettingsIcon,
@@ -21,11 +22,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { leetcodeApi, authApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { ValidatedInput } from "@/components/common/ValidatedInput";
+import { useDelayedNavigate } from "@/hooks/use-delayed-navigate";
 
 const Settings: React.FC = () => {
+  const navigate = useNavigate();
   const { user, updateUser } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
+  const delayedNavigate = useDelayedNavigate();
   const [sessionStatus, setSessionStatus] = useState<any>(null);
 
   // LeetCode Session State
@@ -68,11 +74,24 @@ const Settings: React.FC = () => {
         toast({
           title: "LeetCode Session Saved",
           description: "Your LeetCode session has been stored successfully.",
+          variant: "success",
         });
         setLeetcodeSession({ cookie: "", csrfToken: "", expiresAt: "" });
         checkSessionStatus();
+        delayedNavigate(-1);
       }
     } catch (error: any) {
+      if (error.message === "Network Error") {
+        console.warn("Backend not found. Using mock session save for UI preview.");
+        toast({
+          title: "LeetCode Session Saved (Mock)",
+          description: "Your LeetCode session has been stored successfully.",
+          variant: "success",
+        });
+        setLeetcodeSession({ cookie: "", csrfToken: "", expiresAt: "" });
+        delayedNavigate(-1);
+        return;
+      }
       toast({
         title: "Failed to save session",
         description:
@@ -92,6 +111,7 @@ const Settings: React.FC = () => {
         toast({
           title: "Session Invalidated",
           description: "Your LeetCode session has been removed.",
+          variant: "success",
         });
         setSessionStatus(null);
       }
@@ -107,6 +127,11 @@ const Settings: React.FC = () => {
   };
 
   const handleUpdateProfile = async () => {
+    if (!leetcodeUsername) {
+      setShowErrors(true);
+      return;
+    }
+    setShowErrors(false);
     setIsLoading(true);
     try {
       const response = await authApi.updateProfile({ leetcodeUsername });
@@ -114,12 +139,29 @@ const Settings: React.FC = () => {
         toast({
           title: "Profile Updated",
           description: "Your LeetCode username has been updated.",
+          variant: "success",
         });
         if (updateUser) {
           updateUser({ ...user!, leetcodeUsername });
         }
+
+        // Redirect back after successful update
+        delayedNavigate(-1);
       }
     } catch (error: any) {
+      if (error.message === "Network Error") {
+        console.warn("Backend not found. Using mock profile update for UI preview.");
+        toast({
+          title: "Profile Updated (Mock)",
+          description: "Your LeetCode username has been updated.",
+          variant: "success",
+        });
+        if (updateUser) {
+          updateUser({ ...user!, leetcodeUsername });
+        }
+        delayedNavigate(-1);
+        return;
+      }
       toast({
         title: "Failed to update profile",
         description: error.response?.data?.message || "Please try again.",
@@ -183,11 +225,16 @@ const Settings: React.FC = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="leetcode-username">LeetCode Username</Label>
-                  <Input
+                  <ValidatedInput
                     id="leetcode-username"
                     value={leetcodeUsername}
-                    onChange={(e) => setLeetcodeUsername(e.target.value)}
+                    onChange={(e) => {
+                      setLeetcodeUsername(e.target.value);
+                      if (showErrors) setShowErrors(false);
+                    }}
                     placeholder="Enter your LeetCode username"
+                    error="LeetCode username is required"
+                    showError={showErrors && !leetcodeUsername}
                   />
                 </div>
 

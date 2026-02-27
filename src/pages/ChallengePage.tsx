@@ -9,6 +9,7 @@ import {
   Clock,
   Loader2,
   PlayCircle,
+  UserPlus,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,12 +17,14 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Layout from "@/components/layout/Layout";
+import MembersList from "@/components/challenge/MembersList";
+import InviteUserDialog from "@/components/challenge/InviteUserDialog";
 import ProgressChart from "@/components/dashboard/ProgressChart";
-import { mockChartData } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { challengeApi, dashboardApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { Challenge } from "@/types";
 
 const difficultyColors = {
   easy: "bg-success/10 text-success border-success/20",
@@ -35,11 +38,13 @@ const ChallengePage: React.FC = () => {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const [challenge, setChallenge] = useState<any>(null);
+  const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isJoining, setIsJoining] = useState(false);
   const [isActivating, setIsActivating] = useState(false);
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
 
   useEffect(() => {
     if (id) loadChallengeData();
@@ -49,8 +54,8 @@ const ChallengePage: React.FC = () => {
     setIsLoading(true);
     try {
       const challengeResponse = await challengeApi.getById(id!);
-      const leaderboardResponse =
-        await dashboardApi.getChallengeLeaderboard(id!);
+      const leaderboardResponse = await dashboardApi.getChallengeLeaderboard(id!);
+      const progressResponse = await dashboardApi.getChallengeProgress(id!);
 
       if (challengeResponse.success && challengeResponse.data) {
         setChallenge(challengeResponse.data);
@@ -59,7 +64,12 @@ const ChallengePage: React.FC = () => {
       if (leaderboardResponse.success && leaderboardResponse.data) {
         setLeaderboard(leaderboardResponse.data);
       }
-    } catch {
+
+      if (progressResponse.success && progressResponse.data) {
+        setChartData(progressResponse.data);
+      }
+    } catch (error: any) {
+      console.error("Failed to load challenge:", error);
       toast({
         title: "Failed to load challenge",
         description: "Please try again.",
@@ -138,22 +148,19 @@ const ChallengePage: React.FC = () => {
     );
   }
 
-  const daysRemaining = Math.ceil(
-    (new Date(challenge.endDate).getTime() - Date.now()) /
-      (1000 * 60 * 60 * 24)
-  );
+  const daysRemaining = Math.max(0, Math.ceil(
+    (new Date(challenge.endDate).getTime() - new Date().getTime()) /
+    (1000 * 60 * 60 * 24)
+  ));
 
-  const totalDays = Math.ceil(
+  const totalDays = Math.max(1, Math.ceil(
     (new Date(challenge.endDate).getTime() -
       new Date(challenge.startDate).getTime()) /
-      (1000 * 60 * 60 * 24)
-  );
+    (1000 * 60 * 60 * 24)
+  ));
 
-  const progress = Math.round(
-    ((totalDays - daysRemaining) / totalDays) * 100
-  );
+  const progress = Math.min(100, Math.max(0, Math.round(((totalDays - daysRemaining) / totalDays) * 100)));
 
-  /** ✅ FIX: membership check */
   const isMember = leaderboard.some(
     (member) => member.userId === user?.id
   );
@@ -195,8 +202,19 @@ const ChallengePage: React.FC = () => {
                   Activate
                 </Button>
               )}
+            {challenge.visibility === "PRIVATE" && challenge.ownerId === user?.id && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => setIsInviteDialogOpen(true)}
+              >
+                <UserPlus className="h-4 w-4" />
+                Invite Users
+              </Button>
+            )}
 
-            {!isMember && (
+            {!isMember && challenge.visibility !== "PRIVATE" ? (
               <Button
                 variant="outline"
                 size="sm"
@@ -211,9 +229,7 @@ const ChallengePage: React.FC = () => {
                 )}
                 Join Challenge
               </Button>
-            )}
-
-            {isMember && (
+            ) : (
               <Badge
                 variant="outline"
                 className="bg-success/10 text-success"
@@ -227,7 +243,13 @@ const ChallengePage: React.FC = () => {
         {/* Progress */}
         <Card>
           <CardContent className="p-4">
-            <Progress value={progress} />
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Challenge Progress</span>
+              <span className="text-sm text-muted-foreground">
+                {Math.max(0, totalDays - daysRemaining)} of {totalDays} days
+              </span>
+            </div>
+            <Progress value={progress} className="h-3" />
           </CardContent>
         </Card>
 
@@ -253,10 +275,23 @@ const ChallengePage: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="progress">
-            <ProgressChart data={mockChartData} title="Team Progress" />
+            <ProgressChart data={chartData} title="Team Progress" />
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Invite Users Dialog — open prop guards access; always mounted to avoid async teardown issues */}
+      <InviteUserDialog
+        open={
+          challenge.visibility === "PRIVATE" &&
+          challenge.ownerId === user?.id &&
+          isInviteDialogOpen
+        }
+        onOpenChange={setIsInviteDialogOpen}
+        challengeId={challenge.id}
+        challengeName={challenge.name}
+        existingMemberIds={leaderboard.map((m) => m.userId || m.id)}
+      />
     </Layout>
   );
 };

@@ -57,9 +57,9 @@ const Navbar: React.FC = () => {
       <div className="container flex h-16 items-center justify-between">
         <Link
           to="/"
-          className="flex items-center gap-2 font-semibold transition-colors hover:text-primary"
+          className="group flex items-center gap-2 font-semibold transition-all duration-200 ease-out hover:text-primary"
         >
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-primary">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-primary transition-transform duration-200 group-hover:scale-105">
             <Code2 className="h-5 w-5 text-primary-foreground" />
           </div>
           <span className="hidden text-lg sm:inline-block">
@@ -69,7 +69,12 @@ const Navbar: React.FC = () => {
 
         {isAuthenticated && (
           <div className="hidden md:flex items-center gap-1">
-            <Button variant="ghost" size="sm" asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="transition-all duration-200 hover:scale-[1.04]"
+            >
               <Link to="/" className="gap-2">
                 <LayoutDashboard className="h-4 w-4" />
                 Dashboard
@@ -165,7 +170,7 @@ const Navbar: React.FC = () => {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="relative h-9 w-9 rounded-full"
+                  className="relative h-9 w-9 rounded-full transition-transform duration-200 hover:scale-105"
                 >
                   <Avatar className="h-9 w-9">
                     <AvatarImage src={user.avatar} alt={user.name} />

@@ -1,4 +1,9 @@
+
 import React from 'react';
+
+import { useLeaderboard } from '@/hooks/useLeaderboard';
+import React, { useState, useEffect } from 'react';
+
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Trophy, Medal, Award, TrendingUp } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,6 +17,7 @@ import type { RankableUser } from '@/utils/leaderboardEngine';
 
 const Leaderboard: React.FC = () => {
   const { user } = useAuth();
+
   
   // Remove rank property from mock data since hook will calculate it
   const rawLeaderboardData: RankableUser[] = mockLeaderboard.map(({ rank, ...rest }) => rest) as RankableUser[];
@@ -35,6 +41,60 @@ const Leaderboard: React.FC = () => {
     : 0;
   const totalPenalties = rankedEntries.reduce((acc, e) => acc + (e.penaltyAmount || 0), 0);
 
+  const { toast } = useToast();
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+const [searchQuery, setSearchQuery] = useState('');
+const [sortKey, setSortKey] = useState<'rank' | 'totalSolved' | 'currentStreak' | 'penaltyAmount'>('rank');
+const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  useEffect(() => {
+    loadLeaderboard();
+  }, []);
+
+  const loadLeaderboard = async () => {
+    setIsLoading(true);
+    try {
+      const response = await dashboardApi.getGlobalLeaderboard();
+      if (response.success && response.data) {
+        setLeaderboardData(response.data);
+      } else {
+        throw new Error(response.message || 'Failed to fetch leaderboard data');
+      }
+    } catch (error) {
+      console.error('Failed to load leaderboard:', error);
+      toast({
+        title: 'Error loading leaderboard',
+        description: 'Could not fetch the latest rankings. Please try again later.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+const processedLeaderboard = useLeaderboard(
+  leaderboardData,
+  searchQuery,
+  sortKey,
+  sortOrder
+);
+
+const topThree = processedLeaderboard.slice(0, 3);
+
+ const totalSolved = processedLeaderboard.reduce(
+  (acc, e) => acc + (e.totalSolved || 0),
+  0
+);
+
+const longestStreak =
+  processedLeaderboard.length > 0
+    ? Math.max(...processedLeaderboard.map(e => e.currentStreak || 0))
+    : 0;
+
+const totalPenalties = processedLeaderboard.reduce(
+  (acc, e) => acc + (e.penaltyAmount || 0),
+  0
+);
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -63,6 +123,39 @@ const Leaderboard: React.FC = () => {
         ) : (
           <>
             {/* Top 3 Podium */}
+            <div className="flex flex-col md:flex-row gap-4 justify-center items-center mb-6">
+  <input
+    type="text"
+    placeholder="Search user..."
+    value={searchQuery}
+    onChange={(e) => setSearchQuery(e.target.value)}
+    className="px-3 py-2 rounded-md border bg-background text-sm"
+  />
+
+  <select
+    value={sortKey}
+    onChange={(e) =>
+      setSortKey(
+        e.target.value as 'rank' | 'totalSolved' | 'currentStreak' | 'penaltyAmount'
+      )
+    }
+    className="px-3 py-2 rounded-md border bg-background text-sm"
+  >
+    <option value="rank">Rank</option>
+    <option value="totalSolved">Solved</option>
+    <option value="currentStreak">Streak</option>
+    <option value="penaltyAmount">Penalty</option>
+  </select>
+
+  <Button
+    size="sm"
+    onClick={() =>
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+    }
+  >
+    {sortOrder === 'asc' ? 'Asc' : 'Desc'}
+  </Button>
+</div>
             {topThree.length >= 3 && (
               <div className="grid grid-cols-3 gap-4 max-w-3xl mx-auto">
                 {/* 2nd Place */}
@@ -133,7 +226,11 @@ const Leaderboard: React.FC = () => {
               <Card className="hover-lift">
                 <CardContent className="p-4 text-center">
                   <Trophy className="h-8 w-8 mx-auto mb-2 text-yellow-500" />
+
                   <p className="text-2xl font-bold">{totalEntries}</p>
+
+                <p className="text-2xl font-bold">{processedLeaderboard.length}</p>
+
                   <p className="text-sm text-muted-foreground">Participants</p>
                 </CardContent>
               </Card>
@@ -154,7 +251,14 @@ const Leaderboard: React.FC = () => {
             </div>
 
             {/* Full Leaderboard */}
+
             <LeaderboardTable entries={rankedEntries} currentUserId={user?.id} />
+
+          <LeaderboardTable
+  entries={processedLeaderboard}
+  currentUserId={user?.id}
+/>
+
           </>
         )}
       </div>
