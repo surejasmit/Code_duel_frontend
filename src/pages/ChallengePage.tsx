@@ -20,6 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { challengeApi, dashboardApi } from "@/lib/api";
 import { Challenge, ChartData, LeaderboardEntry } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -43,6 +44,7 @@ const ChallengePage: React.FC = () => {
   const [isJoining, setIsJoining] = useState(false);
   const [isActivating, setIsActivating] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const errorHandler = useErrorHandler();
 
   const loadChallengeData = async () => {
     if (!id) return;
@@ -74,7 +76,8 @@ const ChallengePage: React.FC = () => {
           ? progressResponse.data
           : [],
       );
-    } catch {
+    } catch (err) {
+      errorHandler(err, 'ChallengePage:loadChallengeData');
       setHasError(true);
       toast({
         title: "Failed to load challenge",
@@ -110,6 +113,7 @@ const ChallengePage: React.FC = () => {
         });
       }
     } catch (error: any) {
+      errorHandler(error, 'ChallengePage:handleJoinChallenge');
       toast({
         title: "Failed to join challenge",
         description:

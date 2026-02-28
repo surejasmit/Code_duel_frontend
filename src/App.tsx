@@ -20,143 +20,116 @@ import Settings from "@/pages/Settings";
 import Profile from "@/pages/Profile";
 import Leetcode from "@/pages/Leetcode";
 import NotFound from "@/pages/NotFound";
+import ErrorBoundary from "@/components/common/ErrorBoundary";
+import ErrorFallback from "@/components/common/ErrorFallback";
 
 const queryClient = new QueryClient();
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
-
   if (isLoading) return null;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-
   return <>{children}</>;
 };
 
 const AuthRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
-
   if (isLoading) return null;
   if (isAuthenticated) return <Navigate to="/dashboard" replace />;
-
   return <>{children}</>;
 };
 
-const AppRoutes: React.FC = () => {
-  const { isAuthenticated } = useAuth();
-
-  return (
-    <Routes>
-      <Route
-        path="/"
-        element={
-          isAuthenticated ? <Navigate to="/dashboard" replace /> : <Index />
-        }
-      />
-
-      <Route
-        path="/login"
-        element={
-          <AuthRoute>
-            <Login />
-          </AuthRoute>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <AuthRoute>
-            <Register />
-          </AuthRoute>
-        }
-      />
-
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/leetcode"
-        element={
-          <ProtectedRoute>
-            <Leetcode />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/duel-editor"
-        element={
-          <ProtectedRoute>
-            <CodeEditor />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/challenge/:id"
-        element={
-          <ProtectedRoute>
-            <ChallengePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/create-challenge"
-        element={
-          <ProtectedRoute>
-            <CreateChallenge />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/leaderboard"
-        element={
-          <ProtectedRoute>
-            <Leaderboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/settings"
-        element={
-          <ProtectedRoute>
-            <Settings />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route path="*" element={<NotFound />} />
-    </Routes>
-  );
-};
 
 const App: React.FC = () => {
   return (
-    <QueryClientProvider client={queryClient}>
+    <AuthProvider>
       <ThemeProvider>
-        <AuthProvider>
+        <QueryClientProvider client={queryClient}>
           <TooltipProvider>
-            <Toaster />
-            <Sonner />
             <BrowserRouter>
-              <AppRoutes />
+              <Routes>
+                <Route path="/" element={<ErrorBoundary fallback={<ErrorFallback onRetry={() => window.location.reload()} onReload={() => window.location.reload()} />}><Index /></ErrorBoundary>} />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <ErrorBoundary fallback={<ErrorFallback onRetry={() => window.location.reload()} onReload={() => window.location.reload()} />}>
+                        <Dashboard />
+                      </ErrorBoundary>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/login" element={<AuthRoute><ErrorBoundary fallback={<ErrorFallback onRetry={() => window.location.reload()} onReload={() => window.location.reload()} />}><Login /></ErrorBoundary></AuthRoute>} />
+                <Route path="/register" element={<AuthRoute><ErrorBoundary fallback={<ErrorFallback onRetry={() => window.location.reload()} onReload={() => window.location.reload()} />}><Register /></ErrorBoundary></AuthRoute>} />
+                <Route
+                  path="/challenge/:id"
+                  element={
+                    <ProtectedRoute>
+                      <ErrorBoundary fallback={<ErrorFallback onRetry={() => window.location.reload()} onReload={() => window.location.reload()} />}>
+                        <ChallengePage />
+                      </ErrorBoundary>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/create-challenge"
+                  element={
+                    <ProtectedRoute>
+                      <ErrorBoundary fallback={<ErrorFallback onRetry={() => window.location.reload()} onReload={() => window.location.reload()} />}>
+                        <CreateChallenge />
+                      </ErrorBoundary>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/leaderboard"
+                  element={
+                    <ProtectedRoute>
+                      <ErrorBoundary fallback={<ErrorFallback onRetry={() => window.location.reload()} onReload={() => window.location.reload()} />}>
+                        <Leaderboard />
+                      </ErrorBoundary>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings"
+                  element={
+                    <ProtectedRoute>
+                      <ErrorBoundary fallback={<ErrorFallback onRetry={() => window.location.reload()} onReload={() => window.location.reload()} />}>
+                        <Settings />
+                      </ErrorBoundary>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <ErrorBoundary fallback={<ErrorFallback onRetry={() => window.location.reload()} onReload={() => window.location.reload()} />}>
+                        <Profile />
+                      </ErrorBoundary>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/leetcode"
+                  element={
+                    <ProtectedRoute>
+                      <ErrorBoundary fallback={<ErrorFallback onRetry={() => window.location.reload()} onReload={() => window.location.reload()} />}>
+                        <Leetcode />
+                      </ErrorBoundary>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="*" element={<ErrorBoundary fallback={<ErrorFallback onRetry={() => window.location.reload()} onReload={() => window.location.reload()} />}><NotFound /></ErrorBoundary>} />
+              </Routes>
+              <Toaster />
+              <Sonner />
             </BrowserRouter>
           </TooltipProvider>
-        </AuthProvider>
+        </QueryClientProvider>
       </ThemeProvider>
-    </QueryClientProvider>
+    </AuthProvider>
   );
 };
 

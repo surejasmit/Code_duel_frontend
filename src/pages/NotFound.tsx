@@ -17,18 +17,7 @@ const NotFound = () => {
   return (
     <section className="min-h-screen flex flex-col items-center justify-center bg-background px-4 text-center">
 
-      {/* Animated Background Section */}
-      <div
-        className="w-full max-w-3xl h-[350px] sm:h-[400px] bg-center bg-no-repeat bg-contain flex items-center justify-center"
-        style={{
-          backgroundImage:
-            "url('https://cdn.dribbble.com/users/285475/screenshots/2083086/dribbble_1.gif')",
-        }}
-      >
-        <h1 className="text-7xl sm:text-8xl font-extrabold text-primary drop-shadow-md">
-          
-        </h1>
-      </div>
+      {/* Removed animated image for cleaner 404 UI */}
 
       {/* Content Box */}
       <div className="mt-6 space-y-4">

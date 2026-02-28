@@ -17,12 +17,14 @@ import {
 import { dashboardApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { LeaderboardEntry } from "@/types";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
 
 const Leaderboard: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const errorHandler = useErrorHandler();
 
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>(
     [],
@@ -44,7 +46,8 @@ const Leaderboard: React.FC = () => {
         } else {
           throw new Error(response.message || "Failed to load leaderboard");
         }
-      } catch {
+      } catch (err) {
+        errorHandler(err, 'Leaderboard:loadLeaderboard');
         toast({
           title: "Error loading leaderboard",
           description: "Could not fetch leaderboard.",
@@ -56,7 +59,7 @@ const Leaderboard: React.FC = () => {
     };
 
     loadLeaderboard();
-  }, []);
+  }, [errorHandler]);
 
   const processedLeaderboard = useLeaderboard(
     leaderboardData,

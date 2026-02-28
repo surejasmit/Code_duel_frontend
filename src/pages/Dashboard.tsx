@@ -13,11 +13,13 @@ import EmptyState from "@/components/common/EmptyState";
 import { useAuth } from "@/contexts/AuthContext";
 import { dashboardApi, challengeApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { Stats, ActivityData, ChartData, Challenge } from "@/types";
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const errorHandler = useErrorHandler();
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState<Stats>({
     todayStatus: "pending",
@@ -90,7 +92,7 @@ const Dashboard: React.FC = () => {
         setChallenges(challengesResponse.data as Challenge[]);
       }
     } catch (error: unknown) {
-      console.error("Failed to load dashboard:", error);
+      errorHandler(error, 'Dashboard:loadDashboardData');
       toast({
         title: "Failed to load dashboard",
         description: "Please refresh the page to try again.",
@@ -99,7 +101,7 @@ const Dashboard: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast, errorHandler]);
 
   useEffect(() => {
     loadDashboardData();
