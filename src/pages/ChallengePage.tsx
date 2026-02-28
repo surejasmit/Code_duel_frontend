@@ -22,7 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import InviteDialog from "@/components/challenge/InviteDialog";
-import { Challenge } from "@/types";
+import { Challenge, ChartData, LeaderboardEntry } from "@/types";
 import { getErrorMessage } from "@/lib/utils";
 
 type ChallengeDetails = Challenge & {
