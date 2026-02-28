@@ -23,13 +23,29 @@ import { authApi, leetcodeApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { User, LeetCodeProfile } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Achievement, UserTierProgress } from "@/types";
+import {
+  TierBadge,
+  BadgeWall,
+  ProgressToTier,
+  RecentAchievements,
+} from "@/components/gamification";
+import {
+  mockAchievements,
+  calculateUserTierProgress,
+  mockUserPoints,
+} from "@/data/mockData";
 
 const Profile: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
-  const [leetcodeProfile, setLeetcodeProfile] = useState<LeetCodeProfile | null>(null);
-  const [userProfile, setUserProfile] = useState<User | null>(null);
+  const [leetcodeProfile, setLeetcodeProfile] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [achievements, setAchievements] = useState<Achievement[]>(mockAchievements);
+  const [tierProgress, setTierProgress] = useState<UserTierProgress>(
+    calculateUserTierProgress(mockUserPoints)
+  );
 
   const loadProfileData = useCallback(async () => {
     setIsLoading(true);
@@ -93,9 +109,12 @@ const Profile: React.FC = () => {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 space-y-2">
-            <h1 className="text-3xl font-bold">
-              {profile?.username || user?.name}
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold">
+                {profile?.username || user?.name}
+              </h1>
+              <TierBadge tier={tierProgress.currentTier} size="lg" showLabel />
+            </div>
             <p className="text-muted-foreground flex items-center gap-2">
               <Mail className="h-4 w-4" />
               {profile?.email || user?.email}
@@ -123,10 +142,21 @@ const Profile: React.FC = () => {
         <Tabs defaultValue="overview" className="w-full">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="achievements">Achievements</TabsTrigger>
             <TabsTrigger value="leetcode">LeetCode Stats</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
+            {/* Tier Progress Card */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-1">
+                <ProgressToTier tierProgress={tierProgress} showDetails={false} />
+              </div>
+              <div className="lg:col-span-2">
+                <RecentAchievements achievements={achievements} />
+              </div>
+            </div>
+
             {/* Account Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card>
@@ -235,6 +265,17 @@ const Profile: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="achievements" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-1">
+                <ProgressToTier tierProgress={tierProgress} />
+              </div>
+              <div className="lg:col-span-2">
+                <BadgeWall achievements={achievements} />
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="leetcode" className="space-y-6">

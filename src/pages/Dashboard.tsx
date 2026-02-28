@@ -1,5 +1,5 @@
-import React from "react";
-import { Flame, Target, DollarSign, Zap, Trophy, Plus } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Flame, Target, DollarSign, Zap, Trophy, Plus, Award } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/layout/Layout";
@@ -12,26 +12,20 @@ import InviteRequests from "@/components/dashboard/InviteRequests";
 import EmptyState from "@/components/common/EmptyState";
 import { Skeleton } from "@/components/common/Skeleton";
 import { useAuth } from "@/contexts/AuthContext";
-import { Stats, Challenge } from "@/types";
-
-// ✅ Centralized React Query hooks — single source of truth
+import { dashboardApi, challengeApi, TodayStatusResponse, DashboardResponse, ApiResponse, DashboardStats } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
+import { Stats, Achievement, UserTierProgress, ActivityData, ChartData, Challenge } from "@/types";
+import { TierBadge, RecentAchievements, NextAchievements, ProgressToTier } from "@/components/gamification";
+import { mockAchievements, calculateUserTierProgress, mockUserPoints } from "@/data/mockData";
+import JoinByCodeDialog from "@/components/challenge/JoinByCodeDialog";
 import { useDashboardStats, useActivityHeatmap, useSubmissionChart } from "@/hooks/useDashboardData";
 import { useChallenges } from "@/hooks/useChallenges";
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
-
-  // ✅ All data is fetched via cached React Query hooks
-  // No manual useState/useEffect/loadDashboardData needed
-  const { data: statsData, isLoading: statsLoading } = useDashboardStats();
-  const { data: activityData, isLoading: activityLoading } = useActivityHeatmap();
-  const { data: chartData, isLoading: chartLoading } = useSubmissionChart();
-  const { data: challengesData, isLoading: challengesLoading } = useChallenges();
-
-  const isLoading = statsLoading || activityLoading || chartLoading || challengesLoading;
-
-  // Derive stats with fallbacks
-  const stats: Stats = statsData || {
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState<Stats>({
     todayStatus: "pending",
     todaySolved: 0,
     todayTarget: 0,
@@ -40,11 +34,86 @@ const Dashboard: React.FC = () => {
     totalPenalties: 0,
     activeChallenges: 0,
     totalSolved: 0,
-  };
+  });
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [activityData, setActivityData] = useState<ActivityData[]>([]);
+  const [chartData, setChartData] = useState<ChartData[]>([]);
+  const [achievements] = useState<Achievement[]>(mockAchievements);
+  const [tierProgress] = useState<UserTierProgress>(
+    calculateUserTierProgress(mockUserPoints)
+  );
 
-  const challenges = challengesData || [];
-  const activity = activityData || [];
-  const chart = chartData || [];
+  const loadDashboardData = React.useCallback(async () => {
+    setIsLoading(true);
+    try {
+      // Load all dashboard data in parallel
+      const [
+        dashboardResponse,
+        todayResponse,
+        challengesResponse,
+        statsResponse,
+        activityResponse,
+        chartResponse,
+      ] = await Promise.all([
+        dashboardApi.getOverview(),
+        dashboardApi.getTodayStatus(),
+        challengeApi.getAll(), // Load all challenges, not just active
+        dashboardApi.getStats(),
+        dashboardApi.getActivityHeatmap(),
+        dashboardApi.getSubmissionChart(),
+      ]);
+
+      // Update stats with real data
+      if (statsResponse.success && statsResponse.data) {
+        const statsData = statsResponse.data;
+        const todaySummary = todayResponse?.data?.summary;
+        const dashboardSummary = dashboardResponse?.data?.summary;
+
+        setStats({
+          todayStatus:
+            todaySummary?.completed === todaySummary?.totalChallenges
+              ? ("completed" as const)
+              : ("pending" as const),
+          todaySolved: todaySummary?.completed || 0,
+          todayTarget: todaySummary?.totalChallenges || 0,
+          currentStreak: statsData.currentStreak || 0,
+          longestStreak: statsData.longestStreak || 0,
+          totalPenalties: statsData.totalPenalties || 0,
+          activeChallenges: dashboardSummary?.activeChallenges || 0,
+          totalSolved: statsData.totalSubmissions || 0,
+        });
+      }
+
+      // Update activity heatmap
+      if (activityResponse.success && activityResponse.data) {
+        setActivityData(activityResponse.data as ActivityData[]);
+      }
+
+      // Update chart data
+      if (chartResponse.success && chartResponse.data) {
+        setChartData(chartResponse.data as ChartData[]);
+      }
+
+      // Update challenges list
+      if (challengesResponse.success && challengesResponse.data) {
+        // the backend shape is largely compatible with our Challenge type
+        setChallenges(challengesResponse.data as Challenge[]);
+      }
+    } catch (error: unknown) {
+      console.error("Failed to load dashboard:", error);
+      toast({
+        title: "Failed to load dashboard",
+        description: "Please refresh the page to try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
 
   return (
     <Layout>
@@ -52,20 +121,26 @@ const Dashboard: React.FC = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold">
-              Welcome back,{" "}
-              <span className="gradient-text">{user?.name || "Developer"}</span>
-            </h1>
+            <div className="flex items-center gap-3 mb-1">
+              <h1 className="text-3xl font-bold">
+                Welcome back,{" "}
+                <span className="gradient-text">{user?.name || "Developer"}</span>
+              </h1>
+              <TierBadge tier={tierProgress.currentTier} size="md" />
+            </div>
             <p className="text-muted-foreground mt-1">
               Track your daily coding progress and stay consistent
             </p>
           </div>
-          <Button asChild className="gradient-primary sm:w-auto w-full">
-            <Link to="/create-challenge" className="gap-2">
-              <Plus className="h-4 w-4" />
-              New Challenge
-            </Link>
-          </Button>
+          <div className="flex gap-2 sm:flex-row flex-col">
+            <JoinByCodeDialog />
+            <Button asChild className="gradient-primary sm:w-auto w-full">
+              <Link to="/create-challenge" className="gap-2">
+                <Plus className="h-4 w-4" />
+                New Challenge
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {/* Stats Grid */}
@@ -116,14 +191,31 @@ const Dashboard: React.FC = () => {
           {/* Right Column - Chart */}
           <div className="lg:col-span-2">
             <ProgressChart
-              data={chart}
+              data={chartData}
               title="Daily Submissions (Last 30 Days)"
             />
           </div>
         </div>
 
         {/* Activity Heatmap */}
-        <ActivityHeatmap data={activity} title="Contribution Graph" />
+        <ActivityHeatmap data={activityData} title="Contribution Graph" />
+
+        {/* Gamification Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Tier Progress */}
+          <div className="lg:col-span-1">
+            <ProgressToTier tierProgress={tierProgress} showDetails={false} />
+          </div>
+
+          {/* Recent and Next Achievements */}
+          <div className="lg:col-span-1">
+            <RecentAchievements achievements={achievements} maxItems={3} />
+          </div>
+
+          <div className="lg:col-span-1">
+            <NextAchievements achievements={achievements} maxItems={3} />
+          </div>
+        </div>
 
         {/* Active Challenges */}
         <div className="space-y-4">

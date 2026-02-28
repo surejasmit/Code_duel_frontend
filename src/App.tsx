@@ -27,15 +27,13 @@ import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import Leetcode from "./pages/Leetcode";
+import JoinByCode from "./pages/JoinByCode";
 import StreakTest from "./pages/StreakTest";
 
 
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-
-import CodeEditor from "@/components/CodeEditor";
-
 
 
 const queryClient = new QueryClient({
@@ -172,6 +170,16 @@ const AppRoutes: React.FC = () => {
         }
       />
 
+      <Route
+        path="/join/:code"
+        element={
+          <ProtectedRoute>
+            <JoinByCode />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Catch-all */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
