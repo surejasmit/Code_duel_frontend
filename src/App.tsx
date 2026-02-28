@@ -19,9 +19,6 @@ import LeaderboardTest from "./pages/LeaderboardTest";
 
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
-import ChallengePage from "./pages/ChallengePage";
-import CreateChallenge from "./pages/CreateChallenge";
-import Leaderboard from "./pages/Leaderboard";
 
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";

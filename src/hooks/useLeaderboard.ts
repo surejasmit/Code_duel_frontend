@@ -287,14 +287,8 @@ export const useAdvancedLeaderboard = (
 
 export default useLeaderboard;
 
-import { useMemo } from 'react';
-import { LeaderboardEntry } from '@/types';
-
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
 import { fetchGlobalLeaderboard } from "@/services/duelService";
-import { LeaderboardEntry } from "@/types";
-
 
 // ============================================================================
 // Leaderboard React Query Hook
@@ -324,7 +318,7 @@ export const useGlobalLeaderboard = () => {
  */
 type SortKey = "rank" | "totalSolved" | "currentStreak" | "penaltyAmount";
 
-export const useLeaderboard = (
+export const useClientLeaderboard = (
   data: LeaderboardEntry[],
   searchQuery: string,
   sortKey: SortKey,
