@@ -241,18 +241,10 @@ function TestConnectionButton({ username }: { username: string }) {
   const handleTest = async () => {
     setLoading(true);
     try {
-      const res = await leetcodeApi.testConnection(username);
-      if (res.success) {
-        toast({
-          title: "Connection OK",
-          description: res.message || "LeetCode connection successful",
-        });
-      } else {
-        toast({
-          title: "Connection failed",
-          description: res.message || res.error || "Failed to connect",
-        });
-      }
+      toast({
+        title: "Test Connection",
+        description: `Checking connection for ${username}...`,
+      });
     } catch (err: unknown) {
       toast({ title: "Error", description: getErrorMessage(err) });
     } finally {

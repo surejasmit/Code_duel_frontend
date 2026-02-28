@@ -50,11 +50,12 @@ const JoinByCodeDialog: React.FC = () => {
                     navigate(`/challenge/${challengeId}`);
                 }
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } } };
             toast({
                 title: "Failed to join",
                 description:
-                    error.response?.data?.message || "Invalid or expired invite code",
+                    err.response?.data?.message || "Invalid or expired invite code",
                 variant: "destructive",
             });
         } finally {
