@@ -20,6 +20,7 @@ import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import Leetcode from "./pages/Leetcode";
+import JoinByCode from "./pages/JoinByCode";
 import StreakTest from "./pages/StreakTest";
 
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -41,8 +42,6 @@ import ErrorBoundary from "@/components/common/ErrorBoundary";
 import ErrorFallback from "@/components/common/ErrorFallback";
 
 const queryClient = new QueryClient();
-
-
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -171,6 +170,16 @@ const AppRoutes: React.FC = () => {
         }
       />
 
+      <Route
+        path="/join/:code"
+        element={
+          <ProtectedRoute>
+            <JoinByCode />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Catch-all */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

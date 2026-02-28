@@ -24,7 +24,8 @@ const Dashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState<Stats>({
 import { Stats, Challenge } from "@/types";
-
+import JoinByCodeDialog from "@/components/challenge/JoinByCodeDialog";
+import { Stats, ActivityData, ChartData, Challenge } from "@/types";
 // ✅ Centralized React Query hooks — single source of truth
 import { useDashboardStats, useActivityHeatmap, useSubmissionChart } from "@/hooks/useDashboardData";
 import { useChallenges } from "@/hooks/useChallenges";
@@ -147,12 +148,15 @@ const Dashboard: React.FC = () => {
               Track your daily coding progress and stay consistent
             </p>
           </div>
-          <Button asChild className="gradient-primary sm:w-auto w-full">
-            <Link to="/create-challenge" className="gap-2">
-              <Plus className="h-4 w-4" />
-              New Challenge
-            </Link>
-          </Button>
+          <div className="flex gap-2 sm:flex-row flex-col">
+            <JoinByCodeDialog />
+            <Button asChild className="gradient-primary sm:w-auto w-full">
+              <Link to="/create-challenge" className="gap-2">
+                <Plus className="h-4 w-4" />
+                New Challenge
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {/* Stats Grid */}

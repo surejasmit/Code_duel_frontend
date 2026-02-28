@@ -24,6 +24,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { challengeApi, dashboardApi } from "@/lib/api";
 import { Challenge, ChartData, LeaderboardEntry } from "@/types";
+import { useAuth } from "@/contexts/AuthContext";
+import InviteDialog from "@/components/challenge/InviteDialog";
+import { Challenge } from "@/types";
 import { getErrorMessage } from "@/lib/utils";
 
 type ChallengeDetails = Challenge & {
