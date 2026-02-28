@@ -12,6 +12,10 @@ export default function CodeEditor() {
   const [code, setCode] = useState<string>("// Start coding here...");
   const [language, setLanguage] = useState<string>("javascript");
 
+  const [theme, setTheme] = useState<string>("vs-dark"); // theme toggle
+
+
+
   // 🔹 Run Code
   const handleRunCode = () => {
     console.log("Running code...");
@@ -36,6 +40,18 @@ export default function CodeEditor() {
     return () => window.removeEventListener("keydown", preventSave);
   }, []);
 
+
+  // 🔹 Auto-save every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      localStorage.setItem("duel-code", code);
+      console.log("Auto-saved code!");
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [code]);
+
+
+
   // 🔹 Monaco Shortcuts
   const handleEditorDidMount = (editor: any, monaco: any) => {
     // Ctrl + Enter → Run
@@ -56,9 +72,7 @@ export default function CodeEditor() {
 
     // Ctrl + Shift + F → Format
     editor.addCommand(
-      monaco.KeyMod.CtrlCmd |
-      monaco.KeyMod.Shift |
-      monaco.KeyCode.KeyF,
+      monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyF,
       () => {
         editor.getAction("editor.action.formatDocument").run();
       }
@@ -74,6 +88,34 @@ export default function CodeEditor() {
         Shortcuts: Ctrl+Enter (Run) | Ctrl+S (Save) | Ctrl+Shift+F (Format)
       </div>
 
+
+      {/* 🔹 Controls: Reset + Theme */}
+      <div style={{ marginBottom: "10px" }}>
+        <button
+          onClick={() => setCode("// Start coding here...")}
+          style={{ marginRight: "10px" }}
+        >
+          Reset
+        </button>
+        <button
+          onClick={() => setTheme(theme === "vs-dark" ? "light" : "vs-dark")}
+        >
+          Toggle Theme
+        </button>
+      </div>
+
+      {/* 🔹 Language Selector */}
+
+      <select
+        value={language}
+        onChange={(e) => setLanguage(e.target.value)}
+      >
+        <option value="javascript">JavaScript</option>
+        <option value="typescript">TypeScript</option>
+        <option value="python">Python</option>
+        <option value="cpp">C++</option>
+      </select>
+
       <div className="w-[180px] mb-4">
         <Select value={language} onValueChange={setLanguage}>
           <SelectTrigger>
@@ -88,12 +130,16 @@ export default function CodeEditor() {
         </Select>
       </div>
 
+
+
       <div style={{ marginTop: "10px" }}>
         <Editor
           height="500px"
           language={language}
           value={code}
-          theme="vs-dark"
+
+          theme={theme}
+
           onChange={(value) => setCode(value || "")}
           onMount={handleEditorDidMount}
         />

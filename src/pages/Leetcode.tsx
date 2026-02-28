@@ -1,26 +1,35 @@
 import Layout from "@/components/layout/Layout";
-import { User, Database, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { User as UserIcon, Database, AlertCircle, Settings, Activity } from "lucide-react";
 import { authApi, leetcodeApi } from "@/lib/api";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
+import { User, LeetCodeProfile } from "@/types";
 import ActivityHeatmap from "@/components/dashboard/ActivityHeatmap";
 import EmptyState from "@/components/common/EmptyState";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
+import { getErrorMessage } from "@/lib/utils";
 
 const Leetcode = () => {
   const { user } = useAuth();
-  const [leetcodeProfile, setLeetcodeProfile] = useState(null);
+  const [leetcodeProfile, setLeetcodeProfile] = useState<LeetCodeProfile | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [userProfile, setUserProfile] = useState(null);
-  const [recentSubmissions, setRecentSubmissions] = useState<any[]>([]);
-  const navigate = useNavigate();
-  useEffect(() => {
-    loadProfile();
-  }, []);
+  const [userProfile, setUserProfile] = useState<User | null>(null);
 
-  const loadProfile = async () => {
+  interface LeetCodeSubmission {
+    id: string | number;
+    title: string;
+    titleSlug: string;
+    lang: string;
+    timestamp: number;
+    status?: string;
+    statusDisplay?: string;
+  }
+  const [recentSubmissions, setRecentSubmissions] = useState<LeetCodeSubmission[]>([]);
+  const navigate = useNavigate();
+
+  const loadProfile = useCallback(async () => {
     setIsLoading(true);
     try {
       const profileResponse = await authApi.getProfile();
@@ -36,7 +45,7 @@ const Leetcode = () => {
           if (leetcodeResponse.success) {
             setLeetcodeProfile(leetcodeResponse.data);
           }
-        } catch (err) {
+        } catch (err: unknown) {
           console.error("Failed to load Leetcode profile", err);
         }
         // Also fetch recent submissions (use test endpoint which returns a small sample)
@@ -44,23 +53,30 @@ const Leetcode = () => {
           const testResp = await leetcodeApi.testConnection(user.leetcodeUsername);
           console.log("Test response for recent submissions:", testResp);
           if (testResp.success && testResp.data && testResp.data.submissions) {
-            setRecentSubmissions(testResp.data.submissions);
+            setRecentSubmissions(
+              testResp.data.submissions as LeetCodeSubmission[]
+            );
           }
-        } catch (err) {
+        } catch (err: unknown) {
           console.debug("Failed to fetch recent submissions", err);
         }
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Failed to load Leetcode profile", err);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user?.leetcodeUsername]);
+
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
 
   const profile = userProfile || user;
   useEffect(() => {
     console.log("Profile updated:", leetcodeProfile);
   }, [leetcodeProfile]);
+
   return (
     <Layout>
       <div className="container mx-auto p-4">
@@ -84,7 +100,7 @@ const Leetcode = () => {
 
         {!user?.leetcodeUsername && (
           <EmptyState
-            icon={User}
+            icon={Settings}
             title="No LeetCode username"
             description="Set your LeetCode username in settings to fetch profile data."
             action={{
@@ -101,10 +117,7 @@ const Leetcode = () => {
             icon={Database}
             title="No profile data"
             description="Make sure you've stored a LeetCode session in the backend."
-            action={{
-              label: "Go to Settings",
-              onClick: () => { navigate('/settings') }
-            }}
+            action={{ label: "Go to Settings", onClick: () => { navigate('/settings') } }}
           />
         )}
 
@@ -152,23 +165,23 @@ const Leetcode = () => {
                   <div className="mt-4 text-sm text-muted-foreground">No recent submissions available.</div>
                 ) : (
                   <ul className="mt-4 space-y-3">
-                    {recentSubmissions.map((s: any) => (
-                      <li key={s.id} className="flex items-center justify-between">
-                        <div>
-                          <a
-                            href={`https://leetcode.com/problems/${s.titleSlug}/`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="font-medium hover:underline"
-                          >
-                            {s.title}
-                          </a>
-                          <div className="text-xs text-muted-foreground">
-                            {s.lang} • {new Date(Number(s.timestamp) * 1000).toLocaleString()}
+                    {recentSubmissions.map((s) => (
+                      <li key={String(s.id)} className="flex items-center justify-between">
+                          <div>
+                            <a
+                              href={`https://leetcode.com/problems/${s.titleSlug}/`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="font-medium hover:underline"
+                            >
+                              {s.title}
+                            </a>
+                            <div className="text-xs text-muted-foreground">
+                              {s.lang} • {new Date(s.timestamp * 1000).toLocaleString()}
+                            </div>
                           </div>
-                        </div>
-                        <div className="text-sm text-muted-foreground">{s.statusDisplay || s.status}</div>
-                      </li>
+                          <div className="text-sm text-muted-foreground">{s.statusDisplay || s.status}</div>
+                        </li>
                     ))}
                   </ul>
                 )}
@@ -183,7 +196,7 @@ const Leetcode = () => {
 
 export default Leetcode;
 
-function formatSubmissionCalendar(calendar: any) {
+function formatSubmissionCalendar(calendar: string | Record<string, number> | unknown) {
   if (!calendar) return [];
 
   // The backend returns an object mapping dateStr -> count (or nested structure)
@@ -219,8 +232,8 @@ function TestConnectionButton({ username }: { username: string }) {
       } else {
         toast({ title: "Connection failed", description: res.message || res.error || "Failed to connect" });
       }
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message || "Request failed" });
+    } catch (err: unknown) {
+      toast({ title: "Error", description: getErrorMessage(err) });
     } finally {
       setLoading(false);
     }
