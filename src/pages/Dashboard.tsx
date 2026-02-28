@@ -34,10 +34,12 @@ const Dashboard: React.FC = () => {
   const [chartData, setChartData] = useState<any[]>([]);
 
   useEffect(() => {
-    loadDashboardData();
+    const abortController = new AbortController();
+    loadDashboardData(abortController.signal);
+    return () => abortController.abort();
   }, []);
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = async (signal: AbortSignal) => {
     setIsLoading(true);
     try {
       // Load all dashboard data in parallel
@@ -49,12 +51,12 @@ const Dashboard: React.FC = () => {
         activityResponse,
         chartResponse,
       ] = await Promise.all([
-        dashboardApi.getOverview(),
-        dashboardApi.getTodayStatus(),
-        challengeApi.getAll(), // Load all challenges, not just active
-        dashboardApi.getStats(),
-        dashboardApi.getActivityHeatmap(),
-        dashboardApi.getSubmissionChart(),
+        dashboardApi.getOverview(signal),
+        dashboardApi.getTodayStatus(signal),
+        challengeApi.getAll(signal),
+        dashboardApi.getStats(signal),
+        dashboardApi.getActivityHeatmap(signal),
+        dashboardApi.getSubmissionChart(signal),
       ]);
 
       // Update stats with real data
@@ -93,6 +95,7 @@ const Dashboard: React.FC = () => {
         setChallenges(challengesResponse.data);
       }
     } catch (error: unknown) {
+      if (signal.aborted) return;
       console.error("Failed to load dashboard:", error);
       toast({
         title: "Failed to load dashboard",
@@ -100,7 +103,7 @@ const Dashboard: React.FC = () => {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      if (!signal.aborted) setIsLoading(false);
     }
   };
 

@@ -70,6 +70,7 @@ export interface LoginResponse {
 
 export interface RegisterResponse extends LoginResponse { }
 
+export interface DashboardResponse {
   summary: {
     totalChallenges: number;
     activeChallenges: number;
@@ -157,10 +158,10 @@ export const challengeApi = {
     return response.data;
   },
 
-  getAll: async (params?: { status?: string; owned?: boolean }) => {
+  getAll: async (signal?: AbortSignal, params?: { status?: string; owned?: boolean }) => {
     const response = await api.get<ApiResponse<Challenge[]>>(
       "/api/challenges",
-      { params }
+      { params, signal }
     );
     return response.data;
   },
@@ -248,56 +249,63 @@ export const userApi = {
 // DASHBOARD APIs
 // ============================================================================
 export const dashboardApi = {
-  getOverview: async () => {
+  getOverview: async (signal?: AbortSignal) => {
     const response = await api.get<ApiResponse<DashboardResponse>>(
-      "/api/dashboard"
+      "/api/dashboard",
+      { signal }
     );
     return response.data;
   },
 
-  getTodayStatus: async () => {
+  getTodayStatus: async (signal?: AbortSignal) => {
     const response = await api.get<ApiResponse<TodayStatusResponse>>(
-      "/api/dashboard/today"
+      "/api/dashboard/today",
+      { signal }
     );
     return response.data;
   },
 
-  getChallengeProgress: async (challengeId: string) => {
+  getChallengeProgress: async (challengeId: string, signal?: AbortSignal) => {
     const response = await api.get<ApiResponse<any>>(
-      `/api/dashboard/challenge/${challengeId}`
+      `/api/dashboard/challenge/${challengeId}`,
+      { signal }
     );
     return response.data;
   },
 
-  getChallengeLeaderboard: async (challengeId: string) => {
+  getChallengeLeaderboard: async (challengeId: string, signal?: AbortSignal) => {
     const response = await api.get<ApiResponse<any>>(
-      `/api/dashboard/challenge/${challengeId}/leaderboard`
+      `/api/dashboard/challenge/${challengeId}/leaderboard`,
+      { signal }
     );
     return response.data;
   },
 
-  getActivityHeatmap: async () => {
+  getActivityHeatmap: async (signal?: AbortSignal) => {
     const response = await api.get<ApiResponse<any>>(
-      "/api/dashboard/activity-heatmap"
+      "/api/dashboard/activity-heatmap",
+      { signal }
     );
     return response.data;
   },
 
-  getStats: async () => {
-    const response = await api.get<ApiResponse<any>>("/api/dashboard/stats");
+  getStats: async (signal?: AbortSignal) => {
+    const response = await api.get<ApiResponse<any>>("/api/dashboard/stats", { signal });
     return response.data;
   },
 
-  getSubmissionChart: async () => {
+  getSubmissionChart: async (signal?: AbortSignal) => {
     const response = await api.get<ApiResponse<any>>(
-      "/api/dashboard/submission-chart"
+      "/api/dashboard/submission-chart",
+      { signal }
     );
     return response.data;
   },
 
-  getGlobalLeaderboard: async () => {
+  getGlobalLeaderboard: async (signal?: AbortSignal) => {
     const response = await api.get<ApiResponse<any[]>>(
-      "/api/dashboard/leaderboard"
+      "/api/dashboard/leaderboard",
+      { signal }
     );
     return response.data;
   },
