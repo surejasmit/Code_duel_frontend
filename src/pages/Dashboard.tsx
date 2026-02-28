@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Flame, Target, DollarSign, Zap, Trophy, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,16 +10,28 @@ import ActivityHeatmap from "@/components/dashboard/ActivityHeatmap";
 import ChallengeCard from "@/components/dashboard/ChallengeCard";
 import InviteRequests from "@/components/dashboard/InviteRequests";
 import EmptyState from "@/components/common/EmptyState";
+import { Skeleton } from "@/components/common/Skeleton";
 import { useAuth } from "@/contexts/AuthContext";
-import { dashboardApi, challengeApi } from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
-import { Stats, ActivityData, ChartData, Challenge } from "@/types";
+import { Stats, Challenge } from "@/types";
+
+// ✅ Centralized React Query hooks — single source of truth
+import { useDashboardStats, useActivityHeatmap, useSubmissionChart } from "@/hooks/useDashboardData";
+import { useChallenges } from "@/hooks/useChallenges";
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(true);
-  const [stats, setStats] = useState<Stats>({
+
+  // ✅ All data is fetched via cached React Query hooks
+  // No manual useState/useEffect/loadDashboardData needed
+  const { data: statsData, isLoading: statsLoading } = useDashboardStats();
+  const { data: activityData, isLoading: activityLoading } = useActivityHeatmap();
+  const { data: chartData, isLoading: chartLoading } = useSubmissionChart();
+  const { data: challengesData, isLoading: challengesLoading } = useChallenges();
+
+  const isLoading = statsLoading || activityLoading || chartLoading || challengesLoading;
+
+  // Derive stats with fallbacks
+  const stats: Stats = statsData || {
     todayStatus: "pending",
     todaySolved: 0,
     todayTarget: 0,
@@ -28,82 +40,11 @@ const Dashboard: React.FC = () => {
     totalPenalties: 0,
     activeChallenges: 0,
     totalSolved: 0,
-  });
-  const [challenges, setChallenges] = useState<Challenge[]>([]);
-  const [activityData, setActivityData] = useState<ActivityData[]>([]);
-  const [chartData, setChartData] = useState<ChartData[]>([]);
+  };
 
-  const loadDashboardData = React.useCallback(async () => {
-    setIsLoading(true);
-    try {
-      // Load all dashboard data in parallel
-      const [
-        dashboardResponse,
-        todayResponse,
-        challengesResponse,
-        statsResponse,
-        activityResponse,
-        chartResponse,
-      ] = await Promise.all([
-        dashboardApi.getOverview(),
-        dashboardApi.getTodayStatus(),
-        challengeApi.getAll(), // Load all challenges, not just active
-        dashboardApi.getStats(),
-        dashboardApi.getActivityHeatmap(),
-        dashboardApi.getSubmissionChart(),
-      ]);
-
-      // Update stats with real data
-      if (statsResponse.success && statsResponse.data) {
-        const statsData = statsResponse.data;
-        const todaySummary = todayResponse?.data?.summary;
-        const dashboardSummary = dashboardResponse?.data?.summary;
-
-        setStats({
-          todayStatus:
-            todaySummary?.completed === todaySummary?.totalChallenges
-              ? ("completed" as const)
-              : ("pending" as const),
-          todaySolved: todaySummary?.completed || 0,
-          todayTarget: todaySummary?.totalChallenges || 0,
-          currentStreak: statsData.currentStreak || 0,
-          longestStreak: statsData.longestStreak || 0,
-          totalPenalties: statsData.totalPenalties || 0,
-          activeChallenges: dashboardSummary?.activeChallenges || 0,
-          totalSolved: statsData.totalSubmissions || 0,
-        });
-      }
-
-      // Update activity heatmap
-      if (activityResponse.success && activityResponse.data) {
-        setActivityData(activityResponse.data as ActivityData[]);
-      }
-
-      // Update chart data
-      if (chartResponse.success && chartResponse.data) {
-        setChartData(chartResponse.data as ChartData[]);
-      }
-
-      // Update challenges list
-      if (challengesResponse.success && challengesResponse.data) {
-        // the backend shape is largely compatible with our Challenge type
-        setChallenges(challengesResponse.data as Challenge[]);
-      }
-    } catch (error: unknown) {
-      console.error("Failed to load dashboard:", error);
-      toast({
-        title: "Failed to load dashboard",
-        description: "Please refresh the page to try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
-
-  useEffect(() => {
-    loadDashboardData();
-  }, [loadDashboardData]);
+  const challenges = challengesData || [];
+  const activity = activityData || [];
+  const chart = chartData || [];
 
   return (
     <Layout>
@@ -175,14 +116,14 @@ const Dashboard: React.FC = () => {
           {/* Right Column - Chart */}
           <div className="lg:col-span-2">
             <ProgressChart
-              data={chartData}
+              data={chart}
               title="Daily Submissions (Last 30 Days)"
             />
           </div>
         </div>
 
         {/* Activity Heatmap */}
-        <ActivityHeatmap data={activityData} title="Contribution Graph" />
+        <ActivityHeatmap data={activity} title="Contribution Graph" />
 
         {/* Active Challenges */}
         <div className="space-y-4">
@@ -195,7 +136,7 @@ const Dashboard: React.FC = () => {
 
           {challenges.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {challenges.slice(0, 3).map((challenge) => (
+              {challenges.slice(0, 3).map((challenge: Challenge) => (
                 <ChallengeCard key={challenge.id} challenge={challenge} />
               ))}
             </div>
@@ -206,7 +147,7 @@ const Dashboard: React.FC = () => {
               description="Create or join a challenge to start competing with others and stay motivated!"
               action={{
                 label: "Create Challenge",
-                onClick: () => {},
+                onClick: () => { },
               }}
             />
           )}

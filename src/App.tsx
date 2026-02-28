@@ -11,33 +11,43 @@ import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+
 import ChallengePage from "./pages/ChallengePage";
 import CreateChallenge from "./pages/CreateChallenge";
 import Leaderboard from "./pages/Leaderboard";
 import LeaderboardTest from "./pages/LeaderboardTest";
+
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import ChallengePage from "./pages/ChallengePage";
+import CreateChallenge from "./pages/CreateChallenge";
+import Leaderboard from "./pages/Leaderboard";
+
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import Leetcode from "./pages/Leetcode";
 import StreakTest from "./pages/StreakTest";
+
+
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 
 import CodeEditor from "@/components/CodeEditor";
-import Index from "@/pages/Index";
-import Dashboard from "@/pages/Dashboard";
-import Login from "@/pages/Login";
-import Register from "@/pages/Register";
-import ChallengePage from "@/pages/ChallengePage";
-import CreateChallenge from "@/pages/CreateChallenge";
-import Leaderboard from "@/pages/Leaderboard";
-import Settings from "@/pages/Settings";
-import Profile from "@/pages/Profile";
-import Leetcode from "@/pages/Leetcode";
-import NotFound from "@/pages/NotFound";
 
-const queryClient = new QueryClient();
+
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 2 * 60 * 1000,      // 2 minutes — avoid redundant refetches
+      gcTime: 10 * 60 * 1000,         // 10 minutes — keep cache for back-navigation
+      retry: 1,                        // Retry once on failure
+      refetchOnWindowFocus: true,      // Refresh data when user returns to tab
+    },
+  },
+});
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -71,10 +81,19 @@ const AppRoutes: React.FC = () => {
         }
       />
 
+
+
+
+
       {/* Streak Test Page (Public for easy testing) */}
       <Route path="/streak-test" element={<StreakTest />} />
 
       {/* Auth Routes */}
+
+
+
+
+
       <Route
         path="/login"
         element={
@@ -91,6 +110,8 @@ const AppRoutes: React.FC = () => {
           </AuthRoute>
         }
       />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       <Route
         path="/dashboard"

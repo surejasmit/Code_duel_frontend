@@ -92,6 +92,9 @@ export type RawData = {
   dailyTarget?: number;
 };
 
+
+
+
 // ============================================
 // Streak & Consistency Tracking Types
 // ============================================
@@ -130,6 +133,10 @@ export interface ActivityStats {
   activeToday: boolean;
   totalActiveDays: number;
   dates: string[];
+
+
+
+
 // LeetCode profile returned from the backend
 export interface LeetCodeProfile {
   username: string;
@@ -171,4 +178,5 @@ export interface DashboardResponse {
   };
   activeChallenges: Challenge[];
   recentActivity: ActivityData[];
+
 }

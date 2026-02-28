@@ -15,35 +15,36 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
+const isEmail = (value: string): boolean => /\S+@\S+\.\S+/.test(value);
+
 const Login: React.FC = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
-    {},
-  );
+  const [errors, setErrors] = useState<{ identifier?: string; password?: string }>({});
 
   const { login, isLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const validate = () => {
-    const nextErrors: { email?: string; password?: string } = {};
+    const newErrors: { identifier?: string; password?: string } = {};
 
-    if (!email) {
-      nextErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      nextErrors.email = "Please enter a valid email";
+    if (!identifier.trim()) {
+      newErrors.identifier = 'Email or username is required';
+    } else if (identifier.includes('@') && !isEmail(identifier)) {
+      // Only enforce email format if the user has typed an '@' symbol
+      newErrors.identifier = 'Please enter a valid email address';
     }
 
     if (!password) {
-      nextErrors.password = "Password is required";
+      newErrors.password = "Password is required";
     } else if (password.length < 6) {
-      nextErrors.password = "Password must be at least 6 characters";
+      newErrors.password = "Password must be at least 6 characters";
     }
 
-    setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -51,19 +52,21 @@ const Login: React.FC = () => {
 
     if (!validate()) return;
 
-    const result = await login(email, password);
-
-    if (result.success) {
-      toast({ title: "Welcome back!", description: "Successfully logged in." });
-      navigate("/dashboard");
-      return;
+    try {
+      await login(identifier.trim(), password);
+      toast({
+        title: 'Welcome back!',
+        description: 'Successfully logged in.',
+        variant: 'success',
+      });
+      // delayedNavigate('/');
+    } catch {
+      toast({
+        title: 'Login failed',
+        description: 'Invalid email/username or password. Please try again.',
+        variant: 'destructive',
+      });
     }
-
-    toast({
-      title: "Login failed",
-      description: result.message || "Please check your credentials.",
-      variant: "destructive",
-    });
   };
 
   return (
@@ -92,16 +95,18 @@ const Login: React.FC = () => {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="identifier">Email or Username</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  className={errors.email ? "border-destructive" : ""}
+                  id="identifier"
+                  type="text"
+                  placeholder="you@example.com or your_username"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  autoComplete="username"
+                  className={errors.identifier ? 'border-destructive' : ''}
                 />
-                {errors.email && (
-                  <p className="text-xs text-destructive">{errors.email}</p>
+                {errors.identifier && (
+                  <p className="text-xs text-destructive">{errors.identifier}</p>
                 )}
               </div>
 
@@ -134,11 +139,16 @@ const Login: React.FC = () => {
                 )}
               </div>
 
-              <Button
-                type="submit"
-                className="w-full gradient-primary"
-                disabled={isLoading}
-              >
+              <div className="flex justify-end">
+                <Link 
+                  to="/forgot-password" 
+                  className="text-xs text-primary hover:underline font-medium"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+
+              <Button type="submit" className="w-full gradient-primary" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
