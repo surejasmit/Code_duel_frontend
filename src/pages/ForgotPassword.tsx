@@ -13,19 +13,19 @@ const ForgotPassword: React.FC = () => {
   const [errors, setErrors] = useState<{ email?: string }>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  
+
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const validate = () => {
     const newErrors: { email?: string } = {};
-    
+
     if (!email) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(email)) {
       newErrors.email = 'Please enter a valid email';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -33,9 +33,9 @@ const ForgotPassword: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (!validate()) return;
-    
+
     setIsLoading(true);
     try {
       await authApi.forgotPassword(email);
@@ -44,10 +44,11 @@ const ForgotPassword: React.FC = () => {
         title: 'Email sent!',
         description: 'If an account exists with this email, you will receive a password reset link.',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
       toast({
         title: 'Error',
-        description: error?.response?.data?.message || 'Failed to send reset email. Please try again.',
+        description: err?.response?.data?.message || 'Failed to send reset email. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -126,8 +127,8 @@ const ForgotPassword: React.FC = () => {
             )}
 
             <div className="mt-6 flex items-center justify-between text-sm text-muted-foreground">
-              <Link 
-                to="/login" 
+              <Link
+                to="/login"
                 className="flex items-center gap-1 font-medium text-primary hover:underline"
               >
                 <ArrowLeft className="h-4 w-4" />

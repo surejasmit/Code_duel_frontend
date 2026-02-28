@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -21,15 +21,10 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import InviteDialog from "@/components/challenge/InviteDialog";
-import { Challenge } from "@/types";
+import { Challenge, ChartData, LeaderboardEntry } from "@/types";
 import { getErrorMessage } from "@/lib/utils";
-
-type ChallengeDetails = Challenge & {
-  description?: string;
-  ownerId?: string;
-  visibility?: "PUBLIC" | "PRIVATE" | string;
-};
+import { useRealTimeDuel } from "@/hooks/useRealTimeDuel";
+import { useQueryClient } from "@tanstack/react-query";
 
 // ✅ Centralized React Query hooks — single source of truth
 import {
@@ -37,18 +32,26 @@ import {
   useChallengeLeaderboard,
   useJoinChallenge,
   useActivateChallenge,
+  challengeKeys,
 } from "@/hooks/useChallenges";
+
+type ChallengeDetails = Challenge & {
+  description?: string;
+  ownerId?: string;
+  visibility?: "PUBLIC" | "PRIVATE" | string;
+};
 
 const ChallengePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
 
   // ✅ Cached queries — no manual useState/useEffect/loadChallengeData
-  const { data: challengeRaw, isLoading: challengeLoading } = useChallenge(id);
+  const { data: challengeRaw, isLoading: challengeLoading, isError: challengeError } = useChallenge(id);
   const challenge = challengeRaw as ChallengeDetails | undefined;
-  const { data: leaderboard = [], isLoading: leaderboardLoading } =
+  const { data: leaderboard = [], isLoading: leaderboardLoading, isError: leaderboardError } =
     useChallengeLeaderboard(id);
 
   // ✅ Mutations with auto cache invalidation — no manual reload needed
@@ -56,6 +59,17 @@ const ChallengePage: React.FC = () => {
   const activateMutation = useActivateChallenge();
 
   const isLoading = challengeLoading || leaderboardLoading;
+  const hasError = challengeError || leaderboardError;
+
+  // ✅ Invalidate queries on real-time update
+  const handleRefresh = useCallback(() => {
+    if (id) {
+      queryClient.invalidateQueries({ queryKey: challengeKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: challengeKeys.leaderboard(id) });
+    }
+  }, [id, queryClient]);
+
+  const { status: realTimeStatus } = useRealTimeDuel(id, handleRefresh);
 
   // Chart data placeholder (can be replaced with a React Query hook later)
   const chartData: ChartData[] = [];
@@ -68,7 +82,6 @@ const ChallengePage: React.FC = () => {
         title: "Joined challenge!",
         description: "You have successfully joined the challenge.",
       });
-      // ✅ No need to manually reload — cache auto-invalidates
     } catch (error: unknown) {
       toast({
         title: "Failed to join challenge",
@@ -86,7 +99,6 @@ const ChallengePage: React.FC = () => {
         title: "Challenge activated!",
         description: "Your challenge is now active.",
       });
-      // ✅ No need to manually reload — cache auto-invalidates
     } catch (error: unknown) {
       toast({
         title: "Failed to activate challenge",
@@ -102,7 +114,7 @@ const ChallengePage: React.FC = () => {
     if (challenge.difficultyFilter.length === 3) return "Any";
     if (challenge.difficultyFilter.length === 1)
       return challenge.difficultyFilter[0];
-    return "Mixed";
+    return challenge.difficultyFilter.join(", ");
   }, [challenge]);
 
   const daysRemaining = useMemo(() => {
@@ -111,8 +123,8 @@ const ChallengePage: React.FC = () => {
       0,
       Math.ceil(
         (new Date(challenge.endDate).getTime() - Date.now()) /
-        (1000 * 60 * 60 * 24),
-      ),
+        (1000 * 60 * 60 * 24)
+      )
     );
   }, [challenge]);
 
@@ -123,15 +135,18 @@ const ChallengePage: React.FC = () => {
       Math.ceil(
         (new Date(challenge.endDate).getTime() -
           new Date(challenge.startDate).getTime()) /
-        (1000 * 60 * 60 * 24),
-      ),
+        (1000 * 60 * 60 * 24)
+      )
     );
   }, [challenge]);
 
-  const progress = Math.min(
-    100,
-    Math.max(0, Math.round(((totalDays - daysRemaining) / totalDays) * 100)),
-  );
+  const progress = useMemo(() => {
+    if (totalDays <= 0) return 0;
+    return Math.min(
+      100,
+      Math.max(0, Math.round(((totalDays - daysRemaining) / totalDays) * 100))
+    );
+  }, [totalDays, daysRemaining]);
 
   const isMember = useMemo(() => {
     if (!user) return false;
@@ -148,7 +163,7 @@ const ChallengePage: React.FC = () => {
     );
   }
 
-  if (!challenge) {
+  if (hasError || !challenge) {
     return (
       <Layout>
         <div className="text-center py-12">
@@ -183,6 +198,20 @@ const ChallengePage: React.FC = () => {
               {challenge.status && (
                 <Badge variant="outline">{challenge.status}</Badge>
               )}
+              <Badge
+                variant={realTimeStatus === "CONNECTED" ? "default" : "secondary"}
+                className={
+                  realTimeStatus === "CONNECTED"
+                    ? "bg-green-500 hover:bg-green-600 text-white"
+                    : ""
+                }
+              >
+                {realTimeStatus === "CONNECTED"
+                  ? "Live"
+                  : realTimeStatus === "POLLING"
+                    ? "Polling"
+                    : "Connecting..."}
+              </Badge>
             </div>
 
             <p className="text-muted-foreground">
@@ -266,7 +295,7 @@ const ChallengePage: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Tabs defaultValue="members">
+        <Tabs defaultValue="members" className="w-full">
           <TabsList>
             <TabsTrigger value="members">Members</TabsTrigger>
             <TabsTrigger value="progress">Progress</TabsTrigger>
@@ -279,25 +308,39 @@ const ChallengePage: React.FC = () => {
               </CardHeader>
               <CardContent>
                 {leaderboard.length > 0 ? (
-                  leaderboard.map((member: LeaderboardEntry, index: number) => (
-                    <div
-                      key={member.userId || `member-${index}`}
-                      className="flex justify-between p-3 border rounded-lg mb-2"
-                    >
-                      <span>#{index + 1}</span>
-                      <span>{member.userName}</span>
-                      <span>${member.penaltyAmount || 0}</span>
-                    </div>
-                  ))
+                  <div className="space-y-2">
+                    {leaderboard.map((member: LeaderboardEntry, index: number) => (
+                      <div
+                        key={member.userId || `member-${index}`}
+                        className="flex justify-between items-center p-3 border rounded-lg bg-card"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="font-bold text-muted-foreground">
+                            #{index + 1}
+                          </span>
+                          <span className="font-medium">{member.userName}</span>
+                        </div>
+                        <span className="font-mono font-bold text-destructive">
+                          ${member.penaltyAmount || 0}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 ) : (
-                  <p className="text-muted-foreground">No members yet.</p>
+                  <p className="text-muted-foreground text-center py-8">
+                    No members yet.
+                  </p>
                 )}
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="progress">
-            <ProgressChart data={chartData} title="Team Progress" />
+            <Card>
+              <CardContent className="pt-6">
+                <ProgressChart data={chartData} title="Team Progress" />
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
