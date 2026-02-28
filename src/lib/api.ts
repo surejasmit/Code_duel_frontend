@@ -207,19 +207,19 @@ export const challengeApi = {
     challengeId: string,
     data: { expiresInHours: number; maxUses: number }
   ) => {
-    const response = await api.post<ApiResponse<any>>(
+    const res = await api.post<ApiResponse<any>>(
       `/api/challenges/${challengeId}/invite`,
       data
     );
-    return response.data;
+    return res.data;
   },
 
   joinByCode: async (code: string) => {
-    const response = await api.post<ApiResponse<any>>(
+    const res = await api.post<ApiResponse<any>>(
       "/api/challenges/join-by-code",
       { code }
     );
-    return response.data;
+    return res.data;
   },
 };
 
@@ -277,6 +277,22 @@ export const dashboardApi = {
   getTodayStatus: async (signal?: AbortSignal) => {
     const res = await api.get<ApiResponse<TodayStatusResponse>>(
       "/api/dashboard/today",
+      { signal }
+    );
+    return res.data;
+  },
+
+  getChallengeProgress: async (challengeId: string, signal?: AbortSignal) => {
+    const res = await api.get<ApiResponse<any>>(
+      `/api/dashboard/challenge/${challengeId}`,
+      { signal }
+    );
+    return res.data;
+  },
+
+  getChallengeLeaderboard: async (challengeId: string, signal?: AbortSignal) => {
+    const res = await api.get<ApiResponse<any>>(
+      `/api/dashboard/challenge/${challengeId}/leaderboard`,
       { signal }
     );
     return res.data;
@@ -347,6 +363,44 @@ export const leetcodeApi = {
     const res = await api.get<ApiResponse<LeetCodeProfile>>(
       `/api/leetcode/profile/${username}`
     );
+    return res.data;
+  },
+};
+
+// GAMIFICATION APIs
+export const gamificationApi = {
+  getAllAchievements: async () => {
+    const res = await api.get<ApiResponse<any[]>>("/api/achievements");
+    return res.data;
+  },
+
+  getUserAchievements: async (userId?: string) => {
+    const url = userId
+      ? `/api/achievements/user/${userId}`
+      : "/api/achievements/user";
+    const res = await api.get<ApiResponse<any[]>>(url);
+    return res.data;
+  },
+
+  unlockAchievement: async (achievementId: string) => {
+    const res = await api.post<ApiResponse<any>>("/api/achievements/unlock", {
+      achievementId,
+    });
+    return res.data;
+  },
+
+  getCurrentTier: async () => {
+    const res = await api.get<ApiResponse<any>>("/api/tiers/current");
+    return res.data;
+  },
+
+  getTierProgress: async () => {
+    const res = await api.get<ApiResponse<any>>("/api/tiers/progress");
+    return res.data;
+  },
+
+  getGamificationStats: async () => {
+    const res = await api.get<ApiResponse<any>>("/api/gamification/stats");
     return res.data;
   },
 };

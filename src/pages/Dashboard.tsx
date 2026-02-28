@@ -14,6 +14,8 @@ import { Skeleton } from "@/components/common/Skeleton";
 import JoinByCodeDialog from "@/components/challenge/JoinByCodeDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { Stats, Challenge } from "@/types";
+import { TierBadge, RecentAchievements, NextAchievements, ProgressToTier } from "@/components/gamification";
+import { mockAchievements, calculateUserTierProgress, mockUserPoints } from "@/data/mockData";
 
 // React Query hooks
 import { useDashboardStats, useActivityHeatmap, useSubmissionChart } from "@/hooks/useDashboardData";
@@ -44,6 +46,8 @@ const Dashboard: React.FC = () => {
   const challenges = challengesData || [];
   const activity = activityData || [];
   const chart = chartData || [];
+  const achievements = mockAchievements;
+  const tierProgress = calculateUserTierProgress(mockUserPoints);
 
   return (
     <Layout>
@@ -51,10 +55,13 @@ const Dashboard: React.FC = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold">
-              Welcome back,{" "}
-              <span className="gradient-text">{user?.name || "Developer"}</span>
-            </h1>
+            <div className="flex items-center gap-3 mb-1">
+              <h1 className="text-3xl font-bold">
+                Welcome back,{" "}
+                <span className="gradient-text">{user?.name || "Developer"}</span>
+              </h1>
+              <TierBadge tier={tierProgress.currentTier} size="md" />
+            </div>
             <p className="text-muted-foreground mt-1">
               Track your daily coding progress and stay consistent
             </p>
@@ -126,6 +133,19 @@ const Dashboard: React.FC = () => {
 
             {/* Activity Heatmap */}
             <ActivityHeatmap data={activity} title="Contribution Graph" />
+
+            {/* Gamification Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-1">
+                <ProgressToTier tierProgress={tierProgress} showDetails={false} />
+              </div>
+              <div className="lg:col-span-1">
+                <RecentAchievements achievements={achievements} maxItems={3} />
+              </div>
+              <div className="lg:col-span-1">
+                <NextAchievements achievements={achievements} maxItems={3} />
+              </div>
+            </div>
 
             {/* Active Challenges */}
             <div className="space-y-4">
