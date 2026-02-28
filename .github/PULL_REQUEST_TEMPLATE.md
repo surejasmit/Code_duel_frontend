@@ -1,8 +1,12 @@
-## Team Number : T150
+fix/refactor/standardize-type-safety-T132
+## Team Number : Team 132
+
+main
 
 ## Description
-This PR addresses internal data integrity issues in the "Create Challenge" form by restricting date selection. Users can no longer select past dates for a challenge, and the end date is strictly required to be at least one day after the start date.
-
+This PR focuses on a comprehensive type-safety overhaul and standardization of the core frontend architecture. 
+It resolves over 100 ESLint errors and warnings, primarily targeting unsafe any usages and missing hook dependencies.
+By introducing robust interfaces for Users and LeetCode profiles, the application now boasts reliable property access and improved maintainability.
 ## Related Issue
 N/A
 

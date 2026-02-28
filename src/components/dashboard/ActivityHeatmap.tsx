@@ -46,13 +46,46 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
     return () => clearTimeout(timer);
   }, []);
 
+  // Debug: log all data on mount
+  useEffect(() => {
+    if (data && data.length > 0) {
+      console.log("Activity heatmap loaded with", data.length, "days of data");
+    }
+  }, [data]);
+
   const formatDate = (dateStr: number | string): string => {
     if (!dateStr) return "";
-    // Handle Unix timestamps (seconds) or ISO strings
-    const date = typeof dateStr === "number" ? new Date(dateStr * 1000) : new Date(dateStr);
+    
+    let date: Date;
+    
+    // Handle different date formats
+    if (typeof dateStr === "number") {
+      // Unix timestamp in seconds or milliseconds
+      date = new Date(dateStr > 10000000000 ? dateStr : dateStr * 1000);
+    } else if (typeof dateStr === "string") {
+      // ISO string format (YYYY-MM-DD) or full ISO (2024-02-26T...)
+      if (dateStr.includes("T")) {
+        // Full ISO format
+        date = new Date(dateStr);
+      } else if (/^\d+$/.test(dateStr)) {
+        // Numeric string - Unix timestamp in seconds
+        const timestamp = parseInt(dateStr, 10);
+        date = new Date(timestamp * 1000);
+      } else if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        // Date-only format YYYY-MM-DD - use UTC to avoid timezone issues
+        date = new Date(dateStr + "T00:00:00Z");
+      } else {
+        // Try parsing as-is
+        date = new Date(dateStr);
+      }
+    } else {
+      return "";
+    }
     
     // Check for Invalid Date
-    if (isNaN(date.getTime())) return "Invalid Date";
+    if (isNaN(date.getTime())) {
+      return "";
+    }
 
     return date.toLocaleDateString("en-US", {
       weekday: "long",
@@ -255,7 +288,11 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
                                   ? `${day.count} submission${day.count !== 1 ? "s" : ""}`
                                   : "No submissions"}
                               </p>
-                              <p className="text-muted-foreground">{formatDate(day.date)}</p>
+                              {day.date && (
+                                <p className="text-muted-foreground">
+                                  {formatDate(day.date) || "Date unavailable"}
+                                </p>
+                              )}
                             </TooltipContent>
                           </Tooltip>
                         );
