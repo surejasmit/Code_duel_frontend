@@ -21,7 +21,7 @@ import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { LeaderboardEntry } from "@/types";
 
 // ✅ Centralized React Query hook — cached globally
-import { useGlobalLeaderboard, useLeaderboard } from "@/hooks/useLeaderboard";
+import { useGlobalLeaderboard, useClientLeaderboard } from "@/hooks/useLeaderboard";
 
 const Leaderboard: React.FC = () => {
   const { user } = useAuth();
@@ -29,7 +29,7 @@ const Leaderboard: React.FC = () => {
   const errorHandler = useErrorHandler();
 
   // ✅ Single hook replaces useState + useEffect + loadLeaderboard + toast error handling
-  const { data: leaderboardData = [], isLoading } = useGlobalLeaderboard();
+  const { data: leaderboardData = [], isLoading, error } = useGlobalLeaderboard();
 
   // Client-side filtering and sorting state
   const [searchQuery, setSearchQuery] = useState("");
@@ -62,14 +62,13 @@ const Leaderboard: React.FC = () => {
     loadLeaderboard();
   }, [errorHandler]);
 
-  const processedLeaderboard = useLeaderboard(
+  const processedLeaderboard = useClientLeaderboard(
     leaderboardData as LeaderboardEntry[],
     searchQuery,
     sortKey,
     sortOrder
   );
-
-  const topThree = useMemo(() => processedLeaderboard.slice(0, 3), [processedLeaderboard]);
+  const topThree = processedLeaderboard.slice(0, 3);
 
   const totalSolved = useMemo(
     () =>
@@ -84,8 +83,8 @@ const Leaderboard: React.FC = () => {
     () =>
       processedLeaderboard.length > 0
         ? Math.max(
-          ...processedLeaderboard.map((entry) => entry.currentStreak || 0),
-        )
+            ...processedLeaderboard.map((entry) => entry.currentStreak || 0),
+          )
         : 0,
     [processedLeaderboard]
   );
@@ -109,6 +108,15 @@ const Leaderboard: React.FC = () => {
           </Link>
         </Button>
 
+        {/* Header */}
+        <div className="text-center space-y-2">
+          <h1 className="text-3xl font-bold">Leaderboard</h1>
+          <p className="text-muted-foreground">
+            See who's leading the pack in solving problems
+          </p>
+        </div>
+
+        {/* Filters */}
         <div className="grid gap-3 sm:grid-cols-3">
           <Input
             placeholder="Search username..."
@@ -149,77 +157,21 @@ const Leaderboard: React.FC = () => {
           <div className="flex justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <p className="text-destructive mb-2">Failed to load leaderboard</p>
+            <p className="text-sm text-muted-foreground">{error.message || 'An error occurred'}</p>
+          </div>
+        ) : processedLeaderboard.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <Trophy className="h-12 w-12 mb-4 text-muted-foreground" />
+            <p className="text-lg font-medium">No leaderboard data available</p>
+            <p className="text-sm text-muted-foreground">Check back later!</p>
+          </div>
         ) : (
           <>
-            {/* Top 3 Podium */}
-            {topThree.length >= 3 && searchQuery === "" && (
-              <div className="grid grid-cols-3 gap-4 max-w-3xl mx-auto mb-8">
-                {/* 2nd Place */}
-                <div className="order-1 pt-8">
-                  <Card className="hover-lift text-center p-4 bg-gradient-to-b from-gray-400/10 to-gray-400/5 border-gray-400/20">
-                    <div className="relative mb-3">
-                      <Avatar className="h-16 w-16 mx-auto border-4 border-gray-400">
-                        <AvatarImage src={topThree[1]?.avatar} />
-                        <AvatarFallback>
-                          {topThree[1]?.userName?.charAt(0) || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-gray-400 rounded-full p-1 shadow-lg">
-                        <Medal className="h-4 w-4 text-white" />
-                      </div>
-                    </div>
-                    <div className="font-bold truncate">{topThree[1]?.userName}</div>
-                    <div className="text-xs text-muted-foreground">#2 Overall</div>
-                  </Card>
-                </div>
-
-                {/* 1st Place */}
-                <div className="order-2">
-                  <Card className="hover-lift text-center p-6 bg-gradient-to-b from-yellow-500/10 to-yellow-500/5 border-yellow-500/30 shadow-glow border-2">
-                    <div className="relative mb-4">
-                      <Avatar className="h-20 w-20 mx-auto border-4 border-yellow-500 shadow-lg">
-                        <AvatarImage src={topThree[0]?.avatar} />
-                        <AvatarFallback>
-                          {topThree[0]?.userName?.charAt(0) || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-yellow-500 rounded-full p-1.5 shadow-xl animate-pulse">
-                        <Trophy className="h-5 w-5 text-white" />
-                      </div>
-                    </div>
-                    <div className="font-black text-lg truncate text-yellow-500">
-                      {topThree[0]?.userName}
-                    </div>
-                    <div className="text-xs font-semibold uppercase tracking-wider text-yellow-600">
-                      Grand Master
-                    </div>
-                  </Card>
-                </div>
-
-                {/* 3rd Place */}
-                <div className="order-3 pt-12">
-                  <Card className="hover-lift text-center p-4 bg-gradient-to-b from-amber-600/10 to-amber-600/5 border-amber-600/20">
-                    <div className="relative mb-3">
-                      <Avatar className="h-14 w-14 mx-auto border-4 border-amber-600">
-                        <AvatarImage src={topThree[2]?.avatar} />
-                        <AvatarFallback>
-                          {topThree[2]?.userName?.charAt(0) || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-amber-600 rounded-full p-1 shadow-md">
-                        <Award className="h-4 w-4 text-white" />
-                      </div>
-                    </div>
-                    <div className="font-bold truncate">{topThree[2]?.userName}</div>
-                    <div className="text-xs text-muted-foreground">#3 Overall</div>
-                  </Card>
-                </div>
-              </div>
-            )}
-
-            {/* Top Performers (Upstream style if not enough for podium or searching) */}
-            {(topThree.length < 3 || searchQuery !== "") && topThree.length > 0 && (
-              <Card className="mb-6">
+            {topThree.length > 0 && (
+              <Card>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <TrendingUp className="h-5 w-5 text-primary" />
@@ -245,11 +197,13 @@ const Leaderboard: React.FC = () => {
               </Card>
             )}
 
+            {/* Leaderboard Table */}
             <LeaderboardTable
               entries={processedLeaderboard}
               currentUserId={user?.id}
             />
 
+            {/* Stats Cards */}
             <div className="grid gap-3 sm:grid-cols-3">
               <Card className="hover-lift border-primary/20">
                 <CardContent className="p-4 flex items-center justify-between">
