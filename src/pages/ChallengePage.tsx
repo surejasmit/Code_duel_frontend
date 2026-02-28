@@ -25,6 +25,17 @@ import InviteDialog from "@/components/challenge/InviteDialog";
 import { Challenge } from "@/types";
 import { getErrorMessage } from "@/lib/utils";
 
+type ChartData = {
+  date: string;
+  count: number;
+};
+
+type LeaderboardEntry = {
+  userId: string;
+  userName: string;
+  penaltyAmount: number;
+};
+
 type ChallengeDetails = Challenge & {
   description?: string;
   ownerId?: string;
@@ -45,23 +56,6 @@ const ChallengePage: React.FC = () => {
   const { toast } = useToast();
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
 
-<<<<<<< HEAD
-  useEffect(() => {
-    if (!id) return;
-    const abortController = new AbortController();
-    loadChallengeData(abortController.signal);
-    return () => abortController.abort();
-  }, [id]);
-
-  const loadChallengeData = async (signal: AbortSignal) => {
-    setIsLoading(true);
-    try {
-      const [challengeResponse, leaderboardResponse, progressResponse] = await Promise.all([
-        challengeApi.getById(id!),
-        dashboardApi.getChallengeLeaderboard(id!, signal),
-        dashboardApi.getChallengeProgress(id!, signal),
-      ]);
-=======
   // ✅ Cached queries — no manual useState/useEffect/loadChallengeData
   const { data: challengeRaw, isLoading: challengeLoading } = useChallenge(id);
   const challenge = challengeRaw as ChallengeDetails | undefined;
@@ -71,34 +65,11 @@ const ChallengePage: React.FC = () => {
   // ✅ Mutations with auto cache invalidation — no manual reload needed
   const joinMutation = useJoinChallenge();
   const activateMutation = useActivateChallenge();
->>>>>>> e74b5527e3953bdfa56db7ed5c848afff79ef3bd
 
   const isLoading = challengeLoading || leaderboardLoading;
 
-<<<<<<< HEAD
-      if (leaderboardResponse.success && leaderboardResponse.data) {
-        setLeaderboard(leaderboardResponse.data);
-      }
-
-      if (progressResponse.success && progressResponse.data) {
-        setChartData(progressResponse.data);
-      }
-    } catch (error: any) {
-      if (signal.aborted) return;
-      console.error("Failed to load challenge:", error);
-      toast({
-        title: "Failed to load challenge",
-        description: "Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      if (!signal.aborted) setIsLoading(false);
-    }
-  };
-=======
   // Chart data placeholder (can be replaced with a React Query hook later)
   const chartData: ChartData[] = [];
->>>>>>> e74b5527e3953bdfa56db7ed5c848afff79ef3bd
 
   const handleJoinChallenge = async () => {
     if (!id) return;

@@ -22,45 +22,9 @@ import { useGlobalLeaderboard, useLeaderboard } from "@/hooks/useLeaderboard";
 
 const Leaderboard: React.FC = () => {
   const { user } = useAuth();
-<<<<<<< HEAD
-  const { toast } = useToast();
-  const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-const [searchQuery, setSearchQuery] = useState('');
-const [sortKey, setSortKey] = useState<'rank' | 'totalSolved' | 'currentStreak' | 'penaltyAmount'>('rank');
-const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  useEffect(() => {
-    const abortController = new AbortController();
-    loadLeaderboard(abortController.signal);
-    return () => abortController.abort();
-  }, []);
-
-  const loadLeaderboard = async (signal: AbortSignal) => {
-    setIsLoading(true);
-    try {
-      const response = await dashboardApi.getGlobalLeaderboard(signal);
-      if (response.success && response.data) {
-        setLeaderboardData(response.data);
-      } else {
-        throw new Error(response.message || 'Failed to fetch leaderboard data');
-      }
-    } catch (error: unknown) {
-      if (signal.aborted) return;
-      console.error('Failed to load leaderboard:', error);
-      toast({
-        title: 'Error loading leaderboard',
-        description: 'Could not fetch the latest rankings. Please try again later.',
-        variant: 'destructive',
-      });
-    } finally {
-      if (!signal.aborted) setIsLoading(false);
-    }
-  };
-=======
 
   // ✅ Single hook replaces useState + useEffect + loadLeaderboard + toast error handling
   const { data: leaderboardData = [], isLoading } = useGlobalLeaderboard();
->>>>>>> e74b5527e3953bdfa56db7ed5c848afff79ef3bd
 
   // Client-side filtering and sorting state
   const [searchQuery, setSearchQuery] = useState("");
