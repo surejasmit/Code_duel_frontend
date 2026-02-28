@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
-  User,
+  User as UserIcon,
   Mail,
   Calendar,
   Award,
@@ -12,6 +12,7 @@ import {
   Loader2,
 } from "lucide-react";
 import Layout from "@/components/layout/Layout";
+import { cn, getErrorMessage } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { authApi, leetcodeApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { User, LeetCodeProfile } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Achievement, UserTierProgress } from "@/types";
+import {
+  TierBadge,
+  BadgeWall,
+  ProgressToTier,
+  RecentAchievements,
+} from "@/components/gamification";
+import {
+  mockAchievements,
+  calculateUserTierProgress,
+  mockUserPoints,
+} from "@/data/mockData";
 
 const Profile: React.FC = () => {
   const { user } = useAuth();
@@ -28,12 +42,12 @@ const Profile: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [leetcodeProfile, setLeetcodeProfile] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [achievements, setAchievements] = useState<Achievement[]>(mockAchievements);
+  const [tierProgress, setTierProgress] = useState<UserTierProgress>(
+    calculateUserTierProgress(mockUserPoints)
+  );
 
-  useEffect(() => {
-    loadProfileData();
-  }, []);
-
-  const loadProfileData = async () => {
+  const loadProfileData = useCallback(async () => {
     setIsLoading(true);
     try {
       // Load user profile
@@ -55,17 +69,21 @@ const Profile: React.FC = () => {
           console.error("Failed to load LeetCode profile:", error);
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to load profile:", error);
       toast({
         title: "Failed to load profile",
-        description: "Please refresh the page to try again.",
+        description: getErrorMessage(error),
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user?.leetcodeUsername, toast]);
+
+  useEffect(() => {
+    loadProfileData();
+  }, [loadProfileData]);
 
   if (isLoading) {
     return (
@@ -91,9 +109,12 @@ const Profile: React.FC = () => {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 space-y-2">
-            <h1 className="text-3xl font-bold">
-              {profile?.username || user?.name}
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold">
+                {profile?.username || user?.name}
+              </h1>
+              <TierBadge tier={tierProgress.currentTier} size="lg" showLabel />
+            </div>
             <p className="text-muted-foreground flex items-center gap-2">
               <Mail className="h-4 w-4" />
               {profile?.email || user?.email}
@@ -121,10 +142,21 @@ const Profile: React.FC = () => {
         <Tabs defaultValue="overview" className="w-full">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="achievements">Achievements</TabsTrigger>
             <TabsTrigger value="leetcode">LeetCode Stats</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
+            {/* Tier Progress Card */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-1">
+                <ProgressToTier tierProgress={tierProgress} showDetails={false} />
+              </div>
+              <div className="lg:col-span-2">
+                <RecentAchievements achievements={achievements} />
+              </div>
+            </div>
+
             {/* Account Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card>
@@ -179,7 +211,7 @@ const Profile: React.FC = () => {
                             new Date(
                               profile?.createdAt || Date.now()
                             ).getTime()) /
-                            (1000 * 60 * 60 * 24)
+                          (1000 * 60 * 60 * 24)
                         )}{" "}
                         days
                       </p>
@@ -193,7 +225,7 @@ const Profile: React.FC = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
+                  <UserIcon className="h-5 w-5" />
                   Account Information
                 </CardTitle>
               </CardHeader>
@@ -233,6 +265,17 @@ const Profile: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="achievements" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-1">
+                <ProgressToTier tierProgress={tierProgress} />
+              </div>
+              <div className="lg:col-span-2">
+                <BadgeWall achievements={achievements} />
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="leetcode" className="space-y-6">
@@ -304,8 +347,8 @@ const Profile: React.FC = () => {
                         </p>
                         <p className="text-3xl font-bold text-warning">
                           {Object.values(
-                            leetcodeProfile.submissionCalendar || {}
-                          ).reduce((a: number, b: any) => a + (b as number), 0)}
+                            (leetcodeProfile.submissionCalendar as Record<string, number>) || {}
+                          ).reduce((a: number, b: number) => a + b, 0)}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           This year
@@ -378,8 +421,8 @@ const Profile: React.FC = () => {
                         </span>
                         <span className="text-xl font-bold">
                           {Object.values(
-                            leetcodeProfile.submissionCalendar || {}
-                          ).reduce((a: number, b: any) => a + (b as number), 0)}
+                            (leetcodeProfile.submissionCalendar as Record<string, number>) || {}
+                          ).reduce((a: number, b: number) => a + b, 0)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
@@ -409,7 +452,7 @@ const Profile: React.FC = () => {
                 {/* Recent Activity */}
                 {leetcodeProfile.submissionCalendar &&
                   Object.keys(leetcodeProfile.submissionCalendar).length >
-                    0 && (
+                  0 && (
                     <Card>
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
@@ -419,10 +462,10 @@ const Profile: React.FC = () => {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-2">
-                          {Object.entries(leetcodeProfile.submissionCalendar)
+                          {Object.entries(leetcodeProfile.submissionCalendar as Record<string, number>)
                             .sort(([a], [b]) => parseInt(b) - parseInt(a))
                             .slice(0, 10)
-                            .map(([timestamp, count]: [string, any]) => {
+                            .map(([timestamp, count]) => {
                               const date = new Date(parseInt(timestamp) * 1000);
                               return (
                                 <div

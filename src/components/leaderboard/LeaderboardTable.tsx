@@ -40,7 +40,7 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({ entries, currentUse
             <div
               key={entry.userId}
               className={cn(
-                'flex items-center gap-4 p-3 rounded-lg transition-all duration-200',
+                'flex items-center gap-4 p-3 rounded-lg transition-all duration-300 ease-in-out',
                 'hover:bg-muted/50',
                 getRankBg(entry.rank),
                 entry.userId === currentUserId && 'ring-2 ring-primary ring-offset-2 ring-offset-background'
