@@ -14,7 +14,7 @@ export const fetchChallenges = async (params?: {
     status?: string;
     owned?: boolean;
 }) => {
-    const response = await challengeApi.getAll(params);
+    const response = await challengeApi.getAll(undefined, params);
     if (response.success && response.data) {
         return response.data;
     }

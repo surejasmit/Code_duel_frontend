@@ -10,9 +10,8 @@ import ActivityHeatmap from "@/components/dashboard/ActivityHeatmap";
 import ChallengeCard from "@/components/dashboard/ChallengeCard";
 import InviteRequests from "@/components/dashboard/InviteRequests";
 import EmptyState from "@/components/common/EmptyState";
-import { Skeleton } from "@/components/common/Skeleton";
 import { useAuth } from "@/contexts/AuthContext";
-import { dashboardApi, challengeApi, TodayStatusResponse, DashboardResponse, ApiResponse, DashboardStats } from "@/lib/api";
+import { dashboardApi, challengeApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { Stats, ActivityData, ChartData, Challenge } from "@/types";
@@ -31,8 +30,6 @@ import { Stats, Achievement, UserTierProgress, ActivityData, ChartData, Challeng
 import { TierBadge, RecentAchievements, NextAchievements, ProgressToTier } from "@/components/gamification";
 import { mockAchievements, calculateUserTierProgress, mockUserPoints } from "@/data/mockData";
 import JoinByCodeDialog from "@/components/challenge/JoinByCodeDialog";
-import { useDashboardStats, useActivityHeatmap, useSubmissionChart } from "@/hooks/useDashboardData";
-import { useChallenges } from "@/hooks/useChallenges";
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -128,10 +125,15 @@ const Dashboard: React.FC = () => {
     calculateUserTierProgress(mockUserPoints)
   );
 
-  const loadDashboardData = React.useCallback(async () => {
+  useEffect(() => {
+    const abortController = new AbortController();
+    loadDashboardData(abortController.signal);
+    return () => abortController.abort();
+  }, []);
+
+  const loadDashboardData = async (signal: AbortSignal) => {
     setIsLoading(true);
     try {
-      // Load all dashboard data in parallel
       const [
         dashboardResponse,
         todayResponse,
@@ -140,15 +142,14 @@ const Dashboard: React.FC = () => {
         activityResponse,
         chartResponse,
       ] = await Promise.all([
-        dashboardApi.getOverview(),
-        dashboardApi.getTodayStatus(),
-        challengeApi.getAll(), // Load all challenges, not just active
-        dashboardApi.getStats(),
-        dashboardApi.getActivityHeatmap(),
-        dashboardApi.getSubmissionChart(),
+        dashboardApi.getOverview(signal),
+        dashboardApi.getTodayStatus(signal),
+        challengeApi.getAll(signal),
+        dashboardApi.getStats(signal),
+        dashboardApi.getActivityHeatmap(signal),
+        dashboardApi.getSubmissionChart(signal),
       ]);
 
-      // Update stats with real data
       if (statsResponse.success && statsResponse.data) {
         const statsData = statsResponse.data;
         const todaySummary = todayResponse?.data?.summary;
@@ -169,22 +170,19 @@ const Dashboard: React.FC = () => {
         });
       }
 
-      // Update activity heatmap
       if (activityResponse.success && activityResponse.data) {
         setActivityData(activityResponse.data as ActivityData[]);
       }
 
-      // Update chart data
       if (chartResponse.success && chartResponse.data) {
         setChartData(chartResponse.data as ChartData[]);
       }
 
-      // Update challenges list
       if (challengesResponse.success && challengesResponse.data) {
-        // the backend shape is largely compatible with our Challenge type
         setChallenges(challengesResponse.data as Challenge[]);
       }
     } catch (error: unknown) {
+      if (signal.aborted) return;
       console.error("Failed to load dashboard:", error);
       toast({
         title: "Failed to load dashboard",
@@ -192,13 +190,9 @@ const Dashboard: React.FC = () => {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      if (!signal.aborted) setIsLoading(false);
     }
-  }, [toast]);
-
-  useEffect(() => {
-    loadDashboardData();
-  }, [loadDashboardData]);
+  };
 
   return (
     <Layout>
@@ -246,7 +240,6 @@ const Dashboard: React.FC = () => {
             icon={Target}
             variant="primary"
           />
-
           <StatsCard
             title="Active Challenges"
             value={stats.activeChallenges}
@@ -263,17 +256,13 @@ const Dashboard: React.FC = () => {
           />
         </div>
 
-        {/* Invite Requests */}
         <InviteRequests />
 
         {/* Main Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Today's Status */}
           <div className="lg:col-span-1">
             <TodayStatus stats={stats} />
           </div>
-
-          {/* Right Column - Chart */}
           <div className="lg:col-span-2">
             <ProgressChart
               data={chartData}
@@ -287,16 +276,12 @@ const Dashboard: React.FC = () => {
 
         {/* Gamification Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Tier Progress */}
           <div className="lg:col-span-1">
             <ProgressToTier tierProgress={tierProgress} showDetails={false} />
           </div>
-
-          {/* Recent and Next Achievements */}
           <div className="lg:col-span-1">
             <RecentAchievements achievements={achievements} maxItems={3} />
           </div>
-
           <div className="lg:col-span-1">
             <NextAchievements achievements={achievements} maxItems={3} />
           </div>
@@ -313,7 +298,7 @@ const Dashboard: React.FC = () => {
 
           {challenges.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {challenges.slice(0, 3).map((challenge: Challenge) => (
+              {challenges.slice(0, 3).map((challenge) => (
                 <ChallengeCard key={challenge.id} challenge={challenge} />
               ))}
             </div>
@@ -324,7 +309,7 @@ const Dashboard: React.FC = () => {
               description="Create or join a challenge to start competing with others and stay motivated!"
               action={{
                 label: "Create Challenge",
-                onClick: () => { },
+                onClick: () => {},
               }}
             />
           )}

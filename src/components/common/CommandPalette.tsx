@@ -34,7 +34,7 @@ export default function CommandPalette() {
     return commands.filter((cmd) =>
       cmd.name.toLowerCase().includes(query.toLowerCase())
     );
-  }, [query]);
+  }, [commands, query]);
 
   useEffect(() => {
     if (isOpen) {
@@ -109,11 +109,10 @@ export default function CommandPalette() {
             <li
               key={command.name}
               onClick={() => handleSelect(command)}
-              className={`px-4 py-3 cursor-pointer transition ${
-                index === selectedIndex
+              className={`px-4 py-3 cursor-pointer transition ${index === selectedIndex
                   ? "bg-gray-100 dark:bg-gray-800"
                   : "hover:bg-gray-50 dark:hover:bg-gray-800/50"
-              }`}
+                }`}
             >
               {command.name}
             </li>
