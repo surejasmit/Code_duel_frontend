@@ -23,10 +23,12 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import Layout from "@/components/layout/Layout";
 import { useToast } from "@/hooks/use-toast";
-import { challengeApi } from "@/lib/api";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { getErrorMessage } from "@/lib/utils";
 import DOMPurify from "dompurify";
+
+// ✅ Centralized mutation hook — auto-invalidates challenge cache on success
+import { useCreateChallenge } from "@/hooks/useChallenges";
 
 const getTodayString = () => {
   const today = new Date();
@@ -34,6 +36,7 @@ const getTodayString = () => {
 };
 
 const CreateChallenge: React.FC = () => {
+  // Form state stays as useState — correct for controlled form inputs
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [dailyTarget, setDailyTarget] = useState("2");
@@ -42,7 +45,6 @@ const CreateChallenge: React.FC = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [visibility, setVisibility] = useState("PUBLIC");
-  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const today = format(new Date(), "yyyy-MM-dd");
@@ -52,6 +54,10 @@ const CreateChallenge: React.FC = () => {
 
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // ✅ Mutation replaces direct challengeApi.create() call
+  // On success, auto-invalidates ["challenges"] cache → Dashboard auto-updates
+  const createMutation = useCreateChallenge();
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -93,8 +99,6 @@ const CreateChallenge: React.FC = () => {
 
     if (!validate()) return;
 
-    setIsLoading(true);
-
     try {
       // Map difficulty to difficultyFilter array
       const difficultyFilter: string[] = [];
@@ -107,7 +111,7 @@ const CreateChallenge: React.FC = () => {
       }
       // If 'any', leave empty array
 
-      // Sanitize and validate all user inputs
+      // Sanitize user inputs
       const sanitizedName = DOMPurify.sanitize(name.trim());
       const sanitizedDescription = DOMPurify.sanitize(description.trim());
       const sanitizedDailyTarget = parseInt(dailyTarget);
@@ -116,7 +120,8 @@ const CreateChallenge: React.FC = () => {
       const sanitizedEndDate = new Date(endDate).toISOString();
       const sanitizedVisibility = visibility as "PUBLIC" | "PRIVATE";
 
-      const response = await challengeApi.create({
+      // ✅ Uses mutation hook — cache invalidation is automatic
+      await createMutation.mutateAsync({
         name: sanitizedName,
         description:
           sanitizedDescription ||
@@ -130,23 +135,17 @@ const CreateChallenge: React.FC = () => {
         visibility: sanitizedVisibility,
       });
 
-      if (response.success) {
-        toast({
-          title: "Challenge created!",
-          description: "Your challenge has been created successfully.",
-        });
-        navigate("/");
-      } else {
-        throw new Error(response.message || "Failed to create challenge");
-      }
+      toast({
+        title: "Challenge created!",
+        description: "Your challenge has been created successfully.",
+      });
+      navigate("/");
     } catch (error: unknown) {
       toast({
         title: "Failed to create challenge",
         description: DOMPurify.sanitize(getErrorMessage(error)),
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -338,17 +337,9 @@ const CreateChallenge: React.FC = () => {
                 <Button
                   type="submit"
                   className="flex-1 gradient-primary"
-                  disabled={
-                    isLoading ||
-                    Object.keys(errors).length > 0 ||
-                    !name ||
-                    !dailyTarget ||
-                    !penaltyAmount ||
-                    !startDate ||
-                    !endDate
-                  }
+                  disabled={createMutation.isPending}
                 >
-                  {isLoading ? (
+                  {createMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Creating...
