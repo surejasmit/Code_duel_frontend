@@ -8,13 +8,13 @@ interface AuthContextType {
   isLoading: boolean;
   login: (
     emailOrUsername: string,
-    password: string,
+    password: string
   ) => Promise<{ success: boolean; message?: string }>;
   register: (
     username: string,
     email: string,
     password: string,
-    leetcodeUsername: string,
+    leetcodeUsername: string
   ) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   updateUser: (updatedUser: User) => void;
@@ -22,18 +22,30 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const mapApiUserToUser = (userData: any): User => {
-  const username = userData.username || userData.name || "user";
+/**
+ * Map backend API user response to frontend User type
+ */
+const mapApiUserToUser = (userData: unknown): User => {
+  const data = userData as {
+    id: string;
+    username?: string;
+    name?: string;
+    email: string;
+    leetcodeUsername?: string;
+    avatar?: string;
+    createdAt?: string;
+  };
+  const username = data.username || data.name || "user";
   return {
-    id: userData.id,
-    name: userData.name || username,
+    id: data.id,
+    name: data.name || username,
     username,
-    email: userData.email,
-    leetcodeUsername: userData.leetcodeUsername || "",
+    email: data.email,
+    leetcodeUsername: data.leetcodeUsername || "",
     avatar:
-      userData.avatar ||
+      data.avatar ||
       `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
-    createdAt: userData.createdAt,
+    createdAt: data.createdAt,
   };
 };
 
@@ -72,7 +84,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           localStorage.removeItem("user");
           setUser(null);
         }
-      } catch {
+      } catch (error: unknown) {
+        console.error("Profile fetch unsuccessful during session restore:", error);
         localStorage.removeItem("auth_token");
         localStorage.removeItem("user");
         setUser(null);
@@ -101,11 +114,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setUser(mappedUser);
 
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { message?: string; response?: { data?: { message?: string } } };
+      if (err.message === "Network Error") {
+        console.warn("Backend not found. Using mock login for UI preview.");
+        const mockUser: User = {
+          id: "mock-id",
+          name: emailOrUsername.split("@")[0] || emailOrUsername,
+          email: emailOrUsername.includes("@")
+            ? emailOrUsername
+            : `${emailOrUsername}@example.com`,
+          leetcodeUsername: emailOrUsername.split("@")[0] || emailOrUsername,
+          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${emailOrUsername}`,
+        };
+        localStorage.setItem("auth_token", "mock-token");
+        localStorage.setItem("user", JSON.stringify(mockUser));
+        setUser(mockUser);
+        return { success: true };
+      }
       return {
         success: false,
         message:
-          error?.response?.data?.message || error?.message || "Login failed",
+          err.response?.data?.message || err.message || "Login failed",
       };
     } finally {
       setIsLoading(false);
@@ -116,7 +146,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     username: string,
     email: string,
     password: string,
-    leetcodeUsername: string,
+    leetcodeUsername: string
   ) => {
     setIsLoading(true);
     try {
@@ -124,7 +154,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         email,
         username,
         password,
-        leetcodeUsername,
+        leetcodeUsername
       );
 
       if (!response.success || !response.data) {
@@ -142,12 +172,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setUser(mappedUser);
 
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { message?: string; response?: { data?: { message?: string } } };
+      if (err.message === "Network Error") {
+        console.warn("Backend not found. Using mock registration for UI preview.");
+        const mockUser: User = {
+          id: "mock-id",
+          name: username,
+          email: email,
+          leetcodeUsername: leetcodeUsername,
+          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
+        };
+        localStorage.setItem("auth_token", "mock-token");
+        localStorage.setItem("user", JSON.stringify(mockUser));
+        setUser(mockUser);
+        return { success: true };
+      }
       return {
         success: false,
         message:
-          error?.response?.data?.message ||
-          error?.message ||
+          err.response?.data?.message ||
+          err.message ||
           "Registration failed",
       };
     } finally {

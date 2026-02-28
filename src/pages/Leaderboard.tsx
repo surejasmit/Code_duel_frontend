@@ -1,12 +1,13 @@
 import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Loader2, Trophy } from "lucide-react";
+import { ArrowLeft, Trophy, Medal, Award, TrendingUp, Loader2 } from "lucide-react";
 
 import Layout from "@/components/layout/Layout";
 import LeaderboardTable from "@/components/leaderboard/LeaderboardTable";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
@@ -37,18 +38,17 @@ const Leaderboard: React.FC = () => {
     leaderboardData as LeaderboardEntry[],
     searchQuery,
     sortKey,
-    sortOrder,
+    sortOrder
   );
-
   const topThree = processedLeaderboard.slice(0, 3);
 
   const totalSolved = useMemo(
     () =>
       processedLeaderboard.reduce(
         (acc, entry) => acc + (entry.totalSolved || 0),
-        0,
+        0
       ),
-    [processedLeaderboard],
+    [processedLeaderboard]
   );
 
   const longestStreak = useMemo(
@@ -58,16 +58,16 @@ const Leaderboard: React.FC = () => {
             ...processedLeaderboard.map((entry) => entry.currentStreak || 0),
           )
         : 0,
-    [processedLeaderboard],
+    [processedLeaderboard]
   );
 
   const totalPenalties = useMemo(
     () =>
       processedLeaderboard.reduce(
         (acc, entry) => acc + (entry.penaltyAmount || 0),
-        0,
+        0
       ),
-    [processedLeaderboard],
+    [processedLeaderboard]
   );
 
   return (
@@ -142,26 +142,26 @@ const Leaderboard: React.FC = () => {
           </div>
         ) : (
           <>
-            {/* Top Performers */}
             {topThree.length > 0 && (
               <Card>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <Trophy className="h-5 w-5 text-primary" />
+                    <TrendingUp className="h-5 w-5 text-primary" />
                     <h2 className="font-semibold">Top Performers</h2>
                   </div>
                   <div className="grid gap-2 sm:grid-cols-3">
                     {topThree.map((entry) => (
                       <div
                         key={entry.userId}
-                        className="rounded-md border p-3 text-sm"
+                        className="rounded-md border p-3 text-sm flex items-center gap-3 bg-muted/30"
                       >
-                        <p className="font-medium">
-                          #{entry.rank} {entry.userName}
-                        </p>
-                        <p className="text-muted-foreground">
-                          {entry.totalSolved} solved
-                        </p>
+                        <span className="font-bold text-lg text-primary">#{entry.rank}</span>
+                        <div className="min-w-0">
+                          <p className="font-medium truncate">{entry.userName}</p>
+                          <p className="text-xs text-muted-foreground uppercase">
+                            {entry.totalSolved} solved
+                          </p>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -177,26 +177,31 @@ const Leaderboard: React.FC = () => {
 
             {/* Stats Cards */}
             <div className="grid gap-3 sm:grid-cols-3">
-              <Card>
-                <CardContent className="p-4">
-                  <p className="text-sm text-muted-foreground">Total Solved</p>
-                  <p className="text-2xl font-semibold">{totalSolved}</p>
+              <Card className="hover-lift border-primary/20">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Solved</p>
+                    <p className="text-2xl font-black text-primary">{totalSolved}</p>
+                  </div>
+                  <TrendingUp className="h-8 w-8 text-primary/20" />
                 </CardContent>
               </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <p className="text-sm text-muted-foreground">
-                    Longest Streak
-                  </p>
-                  <p className="text-2xl font-semibold">{longestStreak}</p>
+              <Card className="hover-lift border-yellow-500/20">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Longest Streak</p>
+                    <p className="text-2xl font-black text-yellow-500">{longestStreak}d</p>
+                  </div>
+                  <Trophy className="h-8 w-8 text-yellow-500/20" />
                 </CardContent>
               </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <p className="text-sm text-muted-foreground">
-                    Total Penalties
-                  </p>
-                  <p className="text-2xl font-semibold">${totalPenalties}</p>
+              <Card className="hover-lift border-destructive/20">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Penalties</p>
+                    <p className="text-2xl font-black text-destructive">${totalPenalties}</p>
+                  </div>
+                  <Award className="h-8 w-8 text-destructive/20" />
                 </CardContent>
               </Card>
             </div>

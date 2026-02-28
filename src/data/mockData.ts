@@ -7,7 +7,8 @@ export const currentUser: User = {
   name: 'Alex Chen',
   email: 'alex@example.com',
   avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex',
-  leetcodeUsername: 'alexchen'
+  leetcodeUsername: 'alexchen',
+  createdAt: '2023-01-01T00:00:00Z'
 };
 
 export const mockStats: Stats = {
@@ -38,6 +39,7 @@ export const mockChallenges: Challenge[] = [
         userName: 'Alex Chen',
         avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex',
         status: 'completed',
+        joinedAt: '2024-01-01T00:00:00Z',
         streak: 14,
         totalPenalty: 10,
         dailyProgress: []
@@ -47,6 +49,7 @@ export const mockChallenges: Challenge[] = [
         userName: 'Sarah Miller',
         avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah',
         status: 'completed',
+        joinedAt: '2024-01-02T00:00:00Z',
         streak: 12,
         totalPenalty: 15,
         dailyProgress: []
@@ -56,6 +59,7 @@ export const mockChallenges: Challenge[] = [
         userName: 'John Doe',
         avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
         status: 'failed',
+        joinedAt: '2024-01-03T00:00:00Z',
         streak: 5,
         totalPenalty: 45,
         dailyProgress: []
@@ -78,6 +82,7 @@ export const mockChallenges: Challenge[] = [
         userName: 'Alex Chen',
         avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex',
         status: 'pending',
+        joinedAt: '2024-01-15T00:00:00Z',
         streak: 8,
         totalPenalty: 20,
         dailyProgress: []
@@ -87,6 +92,7 @@ export const mockChallenges: Challenge[] = [
         userName: 'Mike Johnson',
         avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Mike',
         status: 'completed',
+        joinedAt: '2024-01-16T00:00:00Z',
         streak: 10,
         totalPenalty: 10,
         dailyProgress: []
