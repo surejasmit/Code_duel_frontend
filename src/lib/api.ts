@@ -207,38 +207,19 @@ export const challengeApi = {
     challengeId: string,
     data: { expiresInHours: number; maxUses: number }
   ) => {
-    const response = await api.post<ApiResponse<any>>(
+    const res = await api.post<ApiResponse<any>>(
       `/api/challenges/${challengeId}/invite`,
       data
     );
-    return response.data;
+    return res.data;
   },
 
-<<<<<<< HEAD
-  getAll: async (signal?: AbortSignal, params?: { status?: string; owned?: boolean }) => {
-    const response = await api.get<ApiResponse<Challenge[]>>(
-      "/api/challenges",
-      { params, signal }
-    );
-    return response.data;
-  },
-
-  getById: async (id: string) => {
-    const response = await api.get<ApiResponse<Challenge>>(
-      `/api/challenges/${id}`
-    );
-    return response.data;
-  },
-
-  join: async (id: string) => {
-=======
   joinByCode: async (code: string) => {
->>>>>>> main
-    const response = await api.post<ApiResponse<any>>(
+    const res = await api.post<ApiResponse<any>>(
       "/api/challenges/join-by-code",
       { code }
     );
-    return response.data;
+    return res.data;
   },
 };
 
@@ -286,11 +267,7 @@ export const userApi = {
 // DASHBOARD APIs
 export const dashboardApi = {
   getOverview: async (signal?: AbortSignal) => {
-<<<<<<< HEAD
-    const response = await api.get<ApiResponse<DashboardResponse>>(
-=======
     const res = await api.get<ApiResponse<DashboardResponse>>(
->>>>>>> main
       "/api/dashboard",
       { signal }
     );
@@ -298,87 +275,59 @@ export const dashboardApi = {
   },
 
   getTodayStatus: async (signal?: AbortSignal) => {
-<<<<<<< HEAD
-    const response = await api.get<ApiResponse<TodayStatusResponse>>(
-=======
     const res = await api.get<ApiResponse<TodayStatusResponse>>(
->>>>>>> main
       "/api/dashboard/today",
       { signal }
     );
     return res.data;
   },
 
-<<<<<<< HEAD
   getChallengeProgress: async (challengeId: string, signal?: AbortSignal) => {
-    const response = await api.get<ApiResponse<any>>(
+    const res = await api.get<ApiResponse<any>>(
       `/api/dashboard/challenge/${challengeId}`,
-=======
+      { signal }
+    );
+    return res.data;
+  },
+
+  getChallengeLeaderboard: async (challengeId: string, signal?: AbortSignal) => {
+    const res = await api.get<ApiResponse<any>>(
+      `/api/dashboard/challenge/${challengeId}/leaderboard`,
+      { signal }
+    );
+    return res.data;
+  },
+
   getActivityHeatmap: async (signal?: AbortSignal) => {
     const res = await api.get<ApiResponse<ActivityData[]>>(
       "/api/dashboard/activity-heatmap",
->>>>>>> main
       { signal }
     );
     return res.data;
   },
 
-<<<<<<< HEAD
-  getChallengeLeaderboard: async (challengeId: string, signal?: AbortSignal) => {
-    const response = await api.get<ApiResponse<any>>(
-      `/api/dashboard/challenge/${challengeId}/leaderboard`,
-=======
   getStats: async (signal?: AbortSignal) => {
     const res = await api.get<ApiResponse<DashboardStats>>(
       "/api/dashboard/stats",
->>>>>>> main
       { signal }
     );
     return res.data;
   },
 
-<<<<<<< HEAD
-  getActivityHeatmap: async (signal?: AbortSignal) => {
-    const response = await api.get<ApiResponse<any>>(
-      "/api/dashboard/activity-heatmap",
-=======
   getSubmissionChart: async (signal?: AbortSignal) => {
     const res = await api.get<ApiResponse<ChartData[]>>(
       "/api/dashboard/submission-chart",
->>>>>>> main
       { signal }
     );
     return res.data;
   },
 
-<<<<<<< HEAD
-  getStats: async (signal?: AbortSignal) => {
-    const response = await api.get<ApiResponse<any>>("/api/dashboard/stats", { signal });
-    return response.data;
-  },
-
-  getSubmissionChart: async (signal?: AbortSignal) => {
-    const response = await api.get<ApiResponse<any>>(
-      "/api/dashboard/submission-chart",
-      { signal }
-    );
-    return response.data;
-  },
-
-  getGlobalLeaderboard: async (signal?: AbortSignal) => {
-    const response = await api.get<ApiResponse<any[]>>(
-      "/api/dashboard/leaderboard",
-      { signal }
-    );
-    return response.data;
-=======
   getGlobalLeaderboard: async (signal?: AbortSignal) => {
     const res = await api.get<ApiResponse<LeaderboardEntry[]>>(
       "/api/dashboard/leaderboard",
       { signal }
     );
     return res.data;
->>>>>>> main
   },
 };
 
@@ -414,6 +363,44 @@ export const leetcodeApi = {
     const res = await api.get<ApiResponse<LeetCodeProfile>>(
       `/api/leetcode/profile/${username}`
     );
+    return res.data;
+  },
+};
+
+// GAMIFICATION APIs
+export const gamificationApi = {
+  getAllAchievements: async () => {
+    const res = await api.get<ApiResponse<any[]>>("/api/achievements");
+    return res.data;
+  },
+
+  getUserAchievements: async (userId?: string) => {
+    const url = userId
+      ? `/api/achievements/user/${userId}`
+      : "/api/achievements/user";
+    const res = await api.get<ApiResponse<any[]>>(url);
+    return res.data;
+  },
+
+  unlockAchievement: async (achievementId: string) => {
+    const res = await api.post<ApiResponse<any>>("/api/achievements/unlock", {
+      achievementId,
+    });
+    return res.data;
+  },
+
+  getCurrentTier: async () => {
+    const res = await api.get<ApiResponse<any>>("/api/tiers/current");
+    return res.data;
+  },
+
+  getTierProgress: async () => {
+    const res = await api.get<ApiResponse<any>>("/api/tiers/progress");
+    return res.data;
+  },
+
+  getGamificationStats: async () => {
+    const res = await api.get<ApiResponse<any>>("/api/gamification/stats");
     return res.data;
   },
 };
