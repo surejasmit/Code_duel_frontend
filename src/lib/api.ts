@@ -108,7 +108,15 @@ export interface ChallengeResponse {
   status: string;
   ownerId: string;
   createdAt: string;
-  members?: LeaderboardMember[];
+  members?: any[];
+  summary: {
+    totalChallenges: number;
+    activeChallenges: number;
+    completedChallenges: number;
+    totalPenalties: number;
+  };
+  activeChallenges: Challenge[];
+  recentActivity: any[];
 }
 
 export interface TodayStatusResponse {
@@ -423,6 +431,52 @@ export const leetcodeApi = {
     const response = await api.get<ApiResponse<Record<string, unknown>>>(
       `/api/leetcode/problem/${titleSlug}`
     );
+    return response.data;
+  },
+};
+
+// ============================================================================
+// GAMIFICATION APIs
+// ============================================================================
+export const gamificationApi = {
+  // Get all available achievements
+  getAllAchievements: async () => {
+    const response = await api.get<ApiResponse<any[]>>("/api/achievements");
+    return response.data;
+  },
+
+  // Get user's achievements with progress
+  getUserAchievements: async (userId?: string) => {
+    const url = userId
+      ? `/api/achievements/user/${userId}`
+      : "/api/achievements/user";
+    const response = await api.get<ApiResponse<any[]>>(url);
+    return response.data;
+  },
+
+  // Unlock an achievement
+  unlockAchievement: async (achievementId: string) => {
+    const response = await api.post<ApiResponse<any>>("/api/achievements/unlock", {
+      achievementId,
+    });
+    return response.data;
+  },
+
+  // Get user's current tier
+  getCurrentTier: async () => {
+    const response = await api.get<ApiResponse<any>>("/api/tiers/current");
+    return response.data;
+  },
+
+  // Get progress to next tier
+  getTierProgress: async () => {
+    const response = await api.get<ApiResponse<any>>("/api/tiers/progress");
+    return response.data;
+  },
+
+  // Get gamification stats overview
+  getGamificationStats: async () => {
+    const response = await api.get<ApiResponse<any>>("/api/gamification/stats");
     return response.data;
   },
 };

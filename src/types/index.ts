@@ -91,6 +91,67 @@ export type RawData = {
   dailyTarget?: number;
 };
 
+// ============================================================================
+// GAMIFICATION TYPES
+// ============================================================================
+
+export type AchievementCategory =
+  | 'streak'
+  | 'problem_solving'
+  | 'challenge'
+  | 'difficulty'
+  | 'social'
+  | 'special';
+
+export type AchievementTier = 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
+
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  category: AchievementCategory;
+  tier: AchievementTier;
+  points: number;
+  requirement: number;
+  unlockedAt?: string;
+  progress?: number;
+}
+
+export interface UserAchievement {
+  achievementId: string;
+  unlockedAt: string;
+  progress: number;
+}
+
+export type UserTier = 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
+
+export interface TierInfo {
+  tier: UserTier;
+  name: string;
+  minPoints: number;
+  maxPoints: number;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+}
+
+export interface UserTierProgress {
+  currentTier: UserTier;
+  totalPoints: number;
+  currentTierInfo: TierInfo;
+  nextTierInfo: TierInfo | null;
+  pointsToNextTier: number;
+  progressPercentage: number;
+}
+
+export interface GamificationStats {
+  totalPoints: number;
+  currentTier: UserTier;
+  achievementsUnlocked: number;
+  totalAchievements: number;
+  recentAchievements: Achievement[];
+  nextAchievements: Achievement[];
 
 // ============================================
 // Streak & Consistency Tracking Types
@@ -130,7 +191,6 @@ export interface ActivityStats {
   activeToday: boolean;
   totalActiveDays: number;
   dates: string[];
-=======
 // LeetCode profile returned from the backend
 export interface LeetCodeProfile {
   username: string;
