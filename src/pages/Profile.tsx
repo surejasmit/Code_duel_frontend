@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
-  User,
+  User as UserIcon,
   Mail,
   Calendar,
   Award,
@@ -12,6 +12,7 @@ import {
   Loader2,
 } from "lucide-react";
 import Layout from "@/components/layout/Layout";
+import { cn, getErrorMessage } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,15 +21,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { authApi, leetcodeApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { User, LeetCodeProfile } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Profile: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
-  const [leetcodeProfile, setLeetcodeProfile] = useState<any>(null);
-  const [userProfile, setUserProfile] = useState<any>(null);
+  const [leetcodeProfile, setLeetcodeProfile] = useState<LeetCodeProfile | null>(null);
+  const [userProfile, setUserProfile] = useState<User | null>(null);
 
+<<<<<<< HEAD
   useEffect(() => {
     const abortController = new AbortController();
     loadProfileData(abortController.signal);
@@ -36,6 +39,9 @@ const Profile: React.FC = () => {
   }, []);
 
   const loadProfileData = async (signal: AbortSignal) => {
+=======
+  const loadProfileData = useCallback(async () => {
+>>>>>>> e74b5527e3953bdfa56db7ed5c848afff79ef3bd
     setIsLoading(true);
     try {
       // Load user profile
@@ -58,18 +64,26 @@ const Profile: React.FC = () => {
           console.error("Failed to load LeetCode profile:", error);
         }
       }
+<<<<<<< HEAD
     } catch (error: any) {
       if (signal.aborted) return;
+=======
+    } catch (error: unknown) {
+>>>>>>> e74b5527e3953bdfa56db7ed5c848afff79ef3bd
       console.error("Failed to load profile:", error);
       toast({
         title: "Failed to load profile",
-        description: "Please refresh the page to try again.",
+        description: getErrorMessage(error),
         variant: "destructive",
       });
     } finally {
       if (!signal.aborted) setIsLoading(false);
     }
-  };
+  }, [user?.leetcodeUsername, toast]);
+
+  useEffect(() => {
+    loadProfileData();
+  }, [loadProfileData]);
 
   if (isLoading) {
     return (
@@ -183,7 +197,7 @@ const Profile: React.FC = () => {
                             new Date(
                               profile?.createdAt || Date.now()
                             ).getTime()) /
-                            (1000 * 60 * 60 * 24)
+                          (1000 * 60 * 60 * 24)
                         )}{" "}
                         days
                       </p>
@@ -197,7 +211,7 @@ const Profile: React.FC = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
+                  <UserIcon className="h-5 w-5" />
                   Account Information
                 </CardTitle>
               </CardHeader>
@@ -308,8 +322,8 @@ const Profile: React.FC = () => {
                         </p>
                         <p className="text-3xl font-bold text-warning">
                           {Object.values(
-                            leetcodeProfile.submissionCalendar || {}
-                          ).reduce((a: number, b: any) => a + (b as number), 0)}
+                            (leetcodeProfile.submissionCalendar as Record<string, number>) || {}
+                          ).reduce((a: number, b: number) => a + b, 0)}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           This year
@@ -382,8 +396,8 @@ const Profile: React.FC = () => {
                         </span>
                         <span className="text-xl font-bold">
                           {Object.values(
-                            leetcodeProfile.submissionCalendar || {}
-                          ).reduce((a: number, b: any) => a + (b as number), 0)}
+                            (leetcodeProfile.submissionCalendar as Record<string, number>) || {}
+                          ).reduce((a: number, b: number) => a + b, 0)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
@@ -413,7 +427,7 @@ const Profile: React.FC = () => {
                 {/* Recent Activity */}
                 {leetcodeProfile.submissionCalendar &&
                   Object.keys(leetcodeProfile.submissionCalendar).length >
-                    0 && (
+                  0 && (
                     <Card>
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
@@ -423,10 +437,10 @@ const Profile: React.FC = () => {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-2">
-                          {Object.entries(leetcodeProfile.submissionCalendar)
+                          {Object.entries(leetcodeProfile.submissionCalendar as Record<string, number>)
                             .sort(([a], [b]) => parseInt(b) - parseInt(a))
                             .slice(0, 10)
-                            .map(([timestamp, count]: [string, any]) => {
+                            .map(([timestamp, count]) => {
                               const date = new Date(parseInt(timestamp) * 1000);
                               return (
                                 <div

@@ -40,7 +40,7 @@ const Navbar: React.FC = () => {
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate("/login"); // Redirect after logout
   };
 
   const mobileNavLinks = [
@@ -102,7 +102,7 @@ const Navbar: React.FC = () => {
         )}
 
         <div className="flex items-center gap-2">
-          {/* Mobile hamburger menu — visible only below md breakpoint */}
+          {/* Mobile hamburger menu */}
           {isAuthenticated && (
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <Button
@@ -152,6 +152,7 @@ const Navbar: React.FC = () => {
             </Sheet>
           )}
 
+          {/* Theme toggle */}
           <Button
             variant="ghost"
             size="icon"
@@ -165,6 +166,7 @@ const Navbar: React.FC = () => {
             )}
           </Button>
 
+          {/* Auth buttons / user avatar */}
           {isAuthenticated && user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -190,22 +192,19 @@ const Navbar: React.FC = () => {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link to="/settings" className="gap-2 cursor-pointer">
-                    <Settings className="h-4 w-4" />
-                    Settings
+                    <Settings className="h-4 w-4" /> Settings
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/profile" className="gap-2 cursor-pointer">
-                    <User className="h-4 w-4" />
-                    Profile
+                    <User className="h-4 w-4" /> Profile
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={handleLogout}
                   className="gap-2 cursor-pointer text-destructive"
                 >
-                  <LogOut className="h-4 w-4" />
-                  Log out
+                  <LogOut className="h-4 w-4" /> Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
