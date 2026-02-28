@@ -141,9 +141,12 @@ const CreateChallenge: React.FC = () => {
       });
       navigate("/");
     } catch (error: unknown) {
+      const err = error as { message?: string; response?: { data?: { message?: string } } };
       toast({
         title: "Failed to create challenge",
-        description: DOMPurify.sanitize(getErrorMessage(error)),
+        description: DOMPurify.sanitize(
+          err.response?.data?.message || err.message || "Please try again."
+        ),
         variant: "destructive",
       });
     }
@@ -349,11 +352,11 @@ const CreateChallenge: React.FC = () => {
                   )}
                 </Button>
               </div>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    </Layout>
+            </form >
+          </CardContent >
+        </Card >
+      </div >
+    </Layout >
   );
 };
 

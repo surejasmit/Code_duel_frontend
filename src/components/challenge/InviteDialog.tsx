@@ -54,11 +54,12 @@ const InviteDialog: React.FC<InviteDialogProps> = ({ challengeId }) => {
                     description: `Code: ${response.data.code}`,
                 });
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } } };
             toast({
                 title: "Failed to generate invite code",
                 description:
-                    error.response?.data?.message || "Something went wrong",
+                    err.response?.data?.message || "Something went wrong",
                 variant: "destructive",
             });
         } finally {

@@ -72,12 +72,12 @@ const InviteRequests: React.FC = () => {
       } else {
         throw new Error(response.message || "Failed to respond to invite");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (!isMountedRef.current) return;
       toast({
         title: "Action failed",
         description:
-          error.response?.data?.message || error.message || "Please try again.",
+          (error as { response?: { data?: { message?: string } } }).response?.data?.message || (error as Error).message || "Please try again.",
         variant: "destructive",
       });
     } finally {

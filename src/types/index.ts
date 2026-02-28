@@ -17,12 +17,15 @@ export interface User {
 export interface Challenge {
   id: string;
   name: string;
+  description?: string;
   dailyTarget: number;
   difficulty: "easy" | "medium" | "hard" | "any";
   penaltyAmount?: number;
   startDate: string;
   endDate: string;
   createdBy: string;
+  ownerId?: string;
+  visibility?: string;
   members: ChallengeMember[];
   isActive: boolean;
   difficultyFilter?: string[];
@@ -35,10 +38,10 @@ export interface ChallengeMember {
   userName: string;
   avatar?: string;
   status: "completed" | "failed" | "pending";
-  joinedAt?: string;
-  streak?: number;
-  totalPenalty?: number;
-  dailyProgress?: DailyProgress[];
+  joinedAt: string;
+  streak: number;
+  totalPenalty: number;
+  dailyProgress: DailyProgress[];
 }
 
 export interface DailyProgress {
@@ -152,6 +155,7 @@ export interface GamificationStats {
   totalAchievements: number;
   recentAchievements: Achievement[];
   nextAchievements: Achievement[];
+}
 
 // ============================================
 // Streak & Consistency Tracking Types
@@ -191,6 +195,8 @@ export interface ActivityStats {
   activeToday: boolean;
   totalActiveDays: number;
   dates: string[];
+}
+
 // LeetCode profile returned from the backend
 export interface LeetCodeProfile {
   username: string;
@@ -219,8 +225,8 @@ export interface UserSearchResult {
   name: string;
   email: string;
   username: string;
-  avatar?: string;
   leetcodeUsername?: string;
+  avatar?: string;
 }
 
 export interface DashboardResponse {
@@ -232,5 +238,53 @@ export interface DashboardResponse {
   };
   activeChallenges: Challenge[];
   recentActivity: ActivityData[];
-
 }
+
+export interface LeaderboardMember {
+  userId: string;
+  userName?: string;
+  username?: string;
+  totalPenalty?: number;
+  status?: string;
+  avatar?: string;
+}
+
+export interface ChallengeResponse {
+  id: string;
+  name: string;
+  description: string;
+  minSubmissionsPerDay: number;
+  difficultyFilter: string[] | null;
+  uniqueProblemConstraint: boolean;
+  penaltyAmount: number;
+  startDate: string;
+  endDate: string;
+  status: string;
+  ownerId: string;
+  createdAt: string;
+  members?: LeaderboardMember[];
+}
+
+export interface TodayStatusResponse {
+  date: string;
+  challenges: Challenge[];
+  summary: {
+    totalChallenges: number;
+    completed: number;
+    pending: number;
+    failed: number;
+  };
+}
+
+export interface DashboardStats {
+  currentStreak: number;
+  longestStreak: number;
+  totalPenalties: number;
+  totalSubmissions: number;
+}
+
+export interface SessionStatus {
+  isValid: boolean;
+  expiresAt: string;
+}
+

@@ -17,7 +17,7 @@ const ResetPassword: React.FC = () => {
   const [errors, setErrors] = useState<{ newPassword?: string; confirmPassword?: string }>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isInvalidToken, setIsInvalidToken] = useState(false);
-  
+
   const navigate = useNavigate();
   const { toast } = useToast();
   const token = searchParams.get('token');
@@ -30,19 +30,19 @@ const ResetPassword: React.FC = () => {
 
   const validate = () => {
     const newErrors: { newPassword?: string; confirmPassword?: string } = {};
-    
+
     if (!newPassword) {
       newErrors.newPassword = 'Password is required';
     } else if (newPassword.length < 6) {
       newErrors.newPassword = 'Password must be at least 6 characters';
     }
-    
+
     if (!confirmPassword) {
       newErrors.confirmPassword = 'Please confirm your password';
     } else if (newPassword !== confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -50,9 +50,9 @@ const ResetPassword: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (!validate() || !token) return;
-    
+
     setIsLoading(true);
     try {
       await authApi.resetPassword(token, newPassword);
@@ -61,13 +61,14 @@ const ResetPassword: React.FC = () => {
         description: 'You can now log in with your new password.',
       });
       navigate('/login');
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Failed to reset password. Please try again.';
-      
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      const errorMessage = err?.response?.data?.message || 'Failed to reset password. Please try again.';
+
       if (errorMessage.toLowerCase().includes('expired') || errorMessage.toLowerCase().includes('invalid')) {
         setIsInvalidToken(true);
       }
-      
+
       toast({
         title: 'Error',
         description: errorMessage,
