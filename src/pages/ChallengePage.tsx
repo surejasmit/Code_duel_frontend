@@ -47,15 +47,20 @@ const ChallengePage: React.FC = () => {
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
 
   useEffect(() => {
-    if (id) loadChallengeData();
+    if (!id) return;
+    const abortController = new AbortController();
+    loadChallengeData(abortController.signal);
+    return () => abortController.abort();
   }, [id]);
 
-  const loadChallengeData = async () => {
+  const loadChallengeData = async (signal: AbortSignal) => {
     setIsLoading(true);
     try {
-      const challengeResponse = await challengeApi.getById(id!);
-      const leaderboardResponse = await dashboardApi.getChallengeLeaderboard(id!);
-      const progressResponse = await dashboardApi.getChallengeProgress(id!);
+      const [challengeResponse, leaderboardResponse, progressResponse] = await Promise.all([
+        challengeApi.getById(id!),
+        dashboardApi.getChallengeLeaderboard(id!, signal),
+        dashboardApi.getChallengeProgress(id!, signal),
+      ]);
 
       if (challengeResponse.success && challengeResponse.data) {
         setChallenge(challengeResponse.data);
@@ -69,6 +74,7 @@ const ChallengePage: React.FC = () => {
         setChartData(progressResponse.data);
       }
     } catch (error: any) {
+      if (signal.aborted) return;
       console.error("Failed to load challenge:", error);
       toast({
         title: "Failed to load challenge",
@@ -76,7 +82,7 @@ const ChallengePage: React.FC = () => {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      if (!signal.aborted) setIsLoading(false);
     }
   };
 

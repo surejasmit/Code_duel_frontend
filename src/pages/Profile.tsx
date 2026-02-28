@@ -30,10 +30,12 @@ const Profile: React.FC = () => {
   const [userProfile, setUserProfile] = useState<any>(null);
 
   useEffect(() => {
-    loadProfileData();
+    const abortController = new AbortController();
+    loadProfileData(abortController.signal);
+    return () => abortController.abort();
   }, []);
 
-  const loadProfileData = async () => {
+  const loadProfileData = async (signal: AbortSignal) => {
     setIsLoading(true);
     try {
       // Load user profile
@@ -52,10 +54,12 @@ const Profile: React.FC = () => {
             setLeetcodeProfile(leetcodeResponse.data);
           }
         } catch (error) {
+          if (signal.aborted) return;
           console.error("Failed to load LeetCode profile:", error);
         }
       }
     } catch (error: any) {
+      if (signal.aborted) return;
       console.error("Failed to load profile:", error);
       toast({
         title: "Failed to load profile",
@@ -63,7 +67,7 @@ const Profile: React.FC = () => {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      if (!signal.aborted) setIsLoading(false);
     }
   };
 

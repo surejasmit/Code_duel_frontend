@@ -7,9 +7,11 @@ import type {
   ChartData,
   ChallengeInvite,
   UserSearchResult,
+  LeaderboardEntry,
+  LeetCodeProfile,
 } from "@/types";
 
-// API Base URL - Change this to your backend URL
+// API Base URL
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 // Create axios instance
@@ -30,9 +32,7 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // Response interceptor for error handling
@@ -40,7 +40,6 @@ api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      // Clear auth on 401
       localStorage.removeItem("auth_token");
       localStorage.removeItem("user");
       window.location.href = "/login";
@@ -68,8 +67,9 @@ export interface LoginResponse {
   token: string;
 }
 
-export interface RegisterResponse extends LoginResponse { }
+export interface RegisterResponse extends LoginResponse {}
 
+export interface DashboardResponse {
   summary: {
     totalChallenges: number;
     activeChallenges: number;
@@ -77,12 +77,12 @@ export interface RegisterResponse extends LoginResponse { }
     totalPenalties: number;
   };
   activeChallenges: Challenge[];
-  recentActivity: any[];
+  recentActivity: Record<string, unknown>[];
 }
 
 export interface TodayStatusResponse {
   date: string;
-  challenges: any[];
+  challenges: Challenge[];
   summary: {
     totalChallenges: number;
     completed: number;
@@ -91,9 +91,19 @@ export interface TodayStatusResponse {
   };
 }
 
-// ============================================================================
+export interface DashboardStats {
+  currentStreak: number;
+  longestStreak: number;
+  totalPenalties: number;
+  totalSubmissions: number;
+}
+
+export interface SessionStatus {
+  isValid: boolean;
+  expiresAt: string;
+}
+
 // AUTH APIs
-// ============================================================================// API implementations
 export const authApi = {
   login: async (emailOrUsername: string, password: string) => {
     const response = await api.post<ApiResponse<LoginResponse>>(
@@ -157,10 +167,13 @@ export const challengeApi = {
     return response.data;
   },
 
-  getAll: async (params?: { status?: string; owned?: boolean }) => {
+  getAll: async (
+    signal?: AbortSignal,
+    params?: { status?: string; owned?: boolean }
+  ) => {
     const response = await api.get<ApiResponse<Challenge[]>>(
       "/api/challenges",
-      { params }
+      { params, signal }
     );
     return response.data;
   },
@@ -182,23 +195,32 @@ export const challengeApi = {
   updateStatus: async (id: string, status: string) => {
     const response = await api.patch<ApiResponse<Challenge>>(
       `/api/challenges/${id}/status`,
-      {
-        status,
-      }
+      { status }
+    );
+    return response.data;
+  },
+
+  generateInvite: async (
+    challengeId: string,
+    data: { expiresInHours: number; maxUses: number }
+  ) => {
+    const response = await api.post<ApiResponse<any>>(
+      `/api/challenges/${challengeId}/invite`,
+      data
+    );
+    return response.data;
+  },
+
+  joinByCode: async (code: string) => {
+    const response = await api.post<ApiResponse<any>>(
+      "/api/challenges/join-by-code",
+      { code }
     );
     return response.data;
   },
 };
 
-// ============================================================================
 // INVITE APIs
-// NOTE: These endpoints are pending backend implementation.
-// Backend spec (challenge.routes.js) does not yet include invite routes.
-// The UI is ready; calls will gracefully fail (try/catch) until the backend
-// adds: POST /api/challenges/:id/invite, GET /api/invites,
-//        POST /api/challenges/:id/invite/accept|reject
-//        GET  /api/users/search
-// ============================================================================
 export const inviteApi = {
   // POST /api/challenge/:id/invite
   sendInvite: async (challengeId: string, userId: string) => {
@@ -214,7 +236,6 @@ export const inviteApi = {
     return response.data;
   },
 
-  // POST /api/challenge/:id/invite/accept
   acceptInvite: async (challengeId: string) => {
     const response = await api.post<ApiResponse<ChallengeInvite>>(
       `/api/challenge/${challengeId}/invite/accept`
@@ -222,7 +243,6 @@ export const inviteApi = {
     return response.data;
   },
 
-  // POST /api/challenge/:id/invite/reject
   rejectInvite: async (challengeId: string) => {
     const response = await api.post<ApiResponse<ChallengeInvite>>(
       `/api/challenge/${challengeId}/invite/reject`
@@ -231,9 +251,7 @@ export const inviteApi = {
   },
 };
 
-// ============================================================================
 // USER APIs
-// ============================================================================
 export const userApi = {
   searchUsers: async (query: string, signal?: AbortSignal) => {
     const response = await api.get<ApiResponse<UserSearchResult[]>>("/api/users/search", {
@@ -244,90 +262,110 @@ export const userApi = {
   },
 };
 
-// ============================================================================
 // DASHBOARD APIs
-// ============================================================================
 export const dashboardApi = {
-  getOverview: async () => {
+  getOverview: async (signal?: AbortSignal) => {
     const response = await api.get<ApiResponse<DashboardResponse>>(
-      "/api/dashboard"
+      "/api/dashboard",
+      { signal }
     );
     return response.data;
   },
 
-  getTodayStatus: async () => {
+  getTodayStatus: async (signal?: AbortSignal) => {
     const response = await api.get<ApiResponse<TodayStatusResponse>>(
-      "/api/dashboard/today"
+      "/api/dashboard/today",
+      { signal }
     );
     return response.data;
   },
 
-  getChallengeProgress: async (challengeId: string) => {
+  getChallengeProgress: async (challengeId: string, signal?: AbortSignal) => {
     const response = await api.get<ApiResponse<any>>(
-      `/api/dashboard/challenge/${challengeId}`
+      `/api/dashboard/challenge/${challengeId}`,
+      { signal }
     );
     return response.data;
   },
 
-  getChallengeLeaderboard: async (challengeId: string) => {
+  getChallengeLeaderboard: async (challengeId: string, signal?: AbortSignal) => {
     const response = await api.get<ApiResponse<any>>(
-      `/api/dashboard/challenge/${challengeId}/leaderboard`
+      `/api/dashboard/challenge/${challengeId}/leaderboard`,
+      { signal }
     );
     return response.data;
   },
 
-  getActivityHeatmap: async () => {
-    const response = await api.get<ApiResponse<any>>(
-      "/api/dashboard/activity-heatmap"
+  getActivityHeatmap: async (signal?: AbortSignal) => {
+    const response = await api.get<ApiResponse<ActivityData[]>>(
+      "/api/dashboard/activity-heatmap",
+      { signal }
     );
     return response.data;
   },
 
-  getStats: async () => {
-    const response = await api.get<ApiResponse<any>>("/api/dashboard/stats");
-    return response.data;
-  },
-
-  getSubmissionChart: async () => {
-    const response = await api.get<ApiResponse<any>>(
-      "/api/dashboard/submission-chart"
+  getStats: async (signal?: AbortSignal) => {
+    const response = await api.get<ApiResponse<DashboardStats>>(
+      "/api/dashboard/stats",
+      { signal }
     );
     return response.data;
   },
 
-  getGlobalLeaderboard: async () => {
-    const response = await api.get<ApiResponse<any[]>>(
-      "/api/dashboard/leaderboard"
+  getSubmissionChart: async (signal?: AbortSignal) => {
+    const response = await api.get<ApiResponse<ChartData[]>>(
+      "/api/dashboard/submission-chart",
+      { signal }
+    );
+    return response.data;
+  },
+
+  getGlobalLeaderboard: async (signal?: AbortSignal) => {
+    const response = await api.get<ApiResponse<LeaderboardEntry[]>>(
+      "/api/dashboard/leaderboard",
+      { signal }
     );
     return response.data;
   },
 };
 
-// ============================================================================
 // LEETCODE APIs
-// ============================================================================
 export const leetcodeApi = {
   storeSession: async (
     cookie: string,
     csrfToken: string,
     expiresAt: string
   ) => {
-    const response = await api.post<ApiResponse<any>>("/api/leetcode/session", {
-      cookie,
-      csrfToken,
-      expiresAt,
-    });
+    const response = await api.post<ApiResponse<unknown>>(
+      "/api/leetcode/session",
+      { cookie, csrfToken, expiresAt }
+    );
     return response.data;
   },
 
   getSessionStatus: async () => {
-    const response = await api.get<ApiResponse<any>>("/api/leetcode/session");
+    const response = await api.get<ApiResponse<SessionStatus>>(
+      "/api/leetcode/session"
+    );
     return response.data;
   },
 
   invalidateSession: async () => {
-    const response = await api.delete<ApiResponse<any>>(
+    const response = await api.delete<ApiResponse<null>>(
       "/api/leetcode/session"
+    );
+    return response.data;
+  },
+
+  getProfile: async (username: string) => {
+    const response = await api.get<ApiResponse<LeetCodeProfile>>(
+      `/api/leetcode/profile/${username}`
+    );
+    return response.data;
+  },
+};
+
+export default api;pi/leetcode/session"
     );
     return response.data;
   },

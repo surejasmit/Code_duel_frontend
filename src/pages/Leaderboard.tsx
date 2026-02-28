@@ -21,19 +21,22 @@ const [searchQuery, setSearchQuery] = useState('');
 const [sortKey, setSortKey] = useState<'rank' | 'totalSolved' | 'currentStreak' | 'penaltyAmount'>('rank');
 const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   useEffect(() => {
-    loadLeaderboard();
+    const abortController = new AbortController();
+    loadLeaderboard(abortController.signal);
+    return () => abortController.abort();
   }, []);
 
-  const loadLeaderboard = async () => {
+  const loadLeaderboard = async (signal: AbortSignal) => {
     setIsLoading(true);
     try {
-      const response = await dashboardApi.getGlobalLeaderboard();
+      const response = await dashboardApi.getGlobalLeaderboard(signal);
       if (response.success && response.data) {
         setLeaderboardData(response.data);
       } else {
         throw new Error(response.message || 'Failed to fetch leaderboard data');
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      if (signal.aborted) return;
       console.error('Failed to load leaderboard:', error);
       toast({
         title: 'Error loading leaderboard',
@@ -41,7 +44,7 @@ const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
         variant: 'destructive',
       });
     } finally {
-      setIsLoading(false);
+      if (!signal.aborted) setIsLoading(false);
     }
   };
 

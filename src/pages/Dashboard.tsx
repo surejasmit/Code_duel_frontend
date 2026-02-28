@@ -10,6 +10,7 @@ import ActivityHeatmap from "@/components/dashboard/ActivityHeatmap";
 import ChallengeCard from "@/components/dashboard/ChallengeCard";
 import InviteRequests from "@/components/dashboard/InviteRequests";
 import EmptyState from "@/components/common/EmptyState";
+import JoinByCodeDialog from "@/components/challenge/JoinByCodeDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { dashboardApi, challengeApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
@@ -34,10 +35,12 @@ const Dashboard: React.FC = () => {
   const [chartData, setChartData] = useState<any[]>([]);
 
   useEffect(() => {
-    loadDashboardData();
+    const abortController = new AbortController();
+    loadDashboardData(abortController.signal);
+    return () => abortController.abort();
   }, []);
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = async (signal: AbortSignal) => {
     setIsLoading(true);
     try {
       // Load all dashboard data in parallel
@@ -49,12 +52,12 @@ const Dashboard: React.FC = () => {
         activityResponse,
         chartResponse,
       ] = await Promise.all([
-        dashboardApi.getOverview(),
-        dashboardApi.getTodayStatus(),
-        challengeApi.getAll(), // Load all challenges, not just active
-        dashboardApi.getStats(),
-        dashboardApi.getActivityHeatmap(),
-        dashboardApi.getSubmissionChart(),
+        dashboardApi.getOverview(signal),
+        dashboardApi.getTodayStatus(signal),
+        challengeApi.getAll(signal),
+        dashboardApi.getStats(signal),
+        dashboardApi.getActivityHeatmap(signal),
+        dashboardApi.getSubmissionChart(signal),
       ]);
 
       // Update stats with real data
@@ -93,6 +96,7 @@ const Dashboard: React.FC = () => {
         setChallenges(challengesResponse.data);
       }
     } catch (error: unknown) {
+      if (signal.aborted) return;
       console.error("Failed to load dashboard:", error);
       toast({
         title: "Failed to load dashboard",
@@ -100,7 +104,7 @@ const Dashboard: React.FC = () => {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      if (!signal.aborted) setIsLoading(false);
     }
   };
 
@@ -118,12 +122,15 @@ const Dashboard: React.FC = () => {
               Track your daily coding progress and stay consistent
             </p>
           </div>
-          <Button asChild className="gradient-primary sm:w-auto w-full">
-            <Link to="/create-challenge" className="gap-2">
-              <Plus className="h-4 w-4" />
-              New Challenge
-            </Link>
-          </Button>
+          <div className="flex gap-2 sm:flex-row flex-col">
+            <JoinByCodeDialog />
+            <Button asChild className="gradient-primary sm:w-auto w-full">
+              <Link to="/create-challenge" className="gap-2">
+                <Plus className="h-4 w-4" />
+                New Challenge
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {/* Stats Grid */}
