@@ -16,6 +16,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { LeaderboardEntry } from "@/types";
 
 // ✅ Centralized React Query hook — cached globally
@@ -23,6 +25,8 @@ import { useGlobalLeaderboard, useClientLeaderboard } from "@/hooks/useLeaderboa
 
 const Leaderboard: React.FC = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const errorHandler = useErrorHandler();
 
   // ✅ Single hook replaces useState + useEffect + loadLeaderboard + toast error handling
   const { data: leaderboardData = [], isLoading, error } = useGlobalLeaderboard();
@@ -33,6 +37,30 @@ const Leaderboard: React.FC = () => {
     "rank" | "totalSolved" | "currentStreak" | "penaltyAmount"
   >("rank");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  useEffect(() => {
+    const loadLeaderboard = async () => {
+      setIsLoading(true);
+      try {
+        const response = await dashboardApi.getGlobalLeaderboard();
+        if (response.success && response.data) {
+          setLeaderboardData(response.data);
+        } else {
+          throw new Error(response.message || "Failed to load leaderboard");
+        }
+      } catch (err) {
+        errorHandler(err, 'Leaderboard:loadLeaderboard');
+        toast({
+          title: "Error loading leaderboard",
+          description: "Could not fetch leaderboard.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadLeaderboard();
+  }, [errorHandler]);
 
   const processedLeaderboard = useClientLeaderboard(
     leaderboardData as LeaderboardEntry[],

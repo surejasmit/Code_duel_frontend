@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Flame, Target, DollarSign, Zap, Trophy, Plus, Award } from "lucide-react";
+import { Flame, Target, DollarSign, Zap, Trophy, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/layout/Layout";
@@ -10,17 +10,20 @@ import ActivityHeatmap from "@/components/dashboard/ActivityHeatmap";
 import ChallengeCard from "@/components/dashboard/ChallengeCard";
 import InviteRequests from "@/components/dashboard/InviteRequests";
 import EmptyState from "@/components/common/EmptyState";
-import { useAuth } from "@/contexts/AuthContext";
+// ...existing code...
 import { dashboardApi, challengeApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import { Stats, Achievement, UserTierProgress, ActivityData, ChartData, Challenge } from "@/types";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
+import { Stats, Challenge, ActivityData, ChartData, Achievement, UserTierProgress } from "@/types";
+import JoinByCodeDialog from "@/components/challenge/JoinByCodeDialog";
 import { TierBadge, RecentAchievements, NextAchievements, ProgressToTier } from "@/components/gamification";
 import { mockAchievements, calculateUserTierProgress, mockUserPoints } from "@/data/mockData";
-import JoinByCodeDialog from "@/components/challenge/JoinByCodeDialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const errorHandler = useErrorHandler();
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState<Stats>({
     todayStatus: "pending",
@@ -36,17 +39,9 @@ const Dashboard: React.FC = () => {
   const [activityData, setActivityData] = useState<ActivityData[]>([]);
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [achievements] = useState<Achievement[]>(mockAchievements);
-  const [tierProgress] = useState<UserTierProgress>(
-    calculateUserTierProgress(mockUserPoints)
-  );
+  const [tierProgress] = useState<UserTierProgress>(calculateUserTierProgress(mockUserPoints));
 
-  useEffect(() => {
-    const abortController = new AbortController();
-    loadDashboardData(abortController.signal);
-    return () => abortController.abort();
-  }, []);
-
-  const loadDashboardData = async (signal: AbortSignal) => {
+  const loadDashboardData = async (signal?: AbortSignal) => {
     setIsLoading(true);
     try {
       const [
@@ -97,17 +92,23 @@ const Dashboard: React.FC = () => {
         setChallenges(challengesResponse.data as Challenge[]);
       }
     } catch (error: unknown) {
-      if (signal.aborted) return;
-      console.error("Failed to load dashboard:", error);
+      if (signal && signal.aborted) return;
+      errorHandler(error, 'Dashboard:loadDashboardData');
       toast({
         title: "Failed to load dashboard",
         description: "Please refresh the page to try again.",
         variant: "destructive",
       });
     } finally {
-      if (!signal.aborted) setIsLoading(false);
+      if (!signal || !signal.aborted) setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    const abortController = new AbortController();
+    loadDashboardData(abortController.signal);
+    return () => abortController.abort();
+  }, []);
 
   return (
     <Layout>
@@ -232,6 +233,6 @@ const Dashboard: React.FC = () => {
       </div>
     </Layout>
   );
-};
+}
 
 export default Dashboard;
