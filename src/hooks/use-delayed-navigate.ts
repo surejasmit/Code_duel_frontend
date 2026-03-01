@@ -10,7 +10,7 @@ export const useDelayedNavigate = () => {
     const delayedNavigate = (to: string | number, delay: number = 1500) => {
         setTimeout(() => {
             if (typeof to === 'number') {
-                navigate(to as any);
+                navigate(to as unknown as string); // casting to string strictly per TS requirement for useNavigate if overloaded
             } else {
                 navigate(to);
             }

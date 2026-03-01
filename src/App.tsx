@@ -11,17 +11,22 @@ import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
+
 import ChallengePage from "./pages/ChallengePage";
 import CreateChallenge from "./pages/CreateChallenge";
 import Leaderboard from "./pages/Leaderboard";
+import LeaderboardTest from "./pages/LeaderboardTest";
+
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import Leetcode from "./pages/Leetcode";
 import JoinByCode from "./pages/JoinByCode";
 import StreakTest from "./pages/StreakTest";
+
 
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
@@ -72,10 +77,16 @@ const AppRoutes: React.FC = () => {
       />
 
 
+
+
+
       {/* Streak Test Page (Public for easy testing) */}
       <Route path="/streak-test" element={<StreakTest />} />
 
       {/* Auth Routes */}
+
+
+
 
 
       <Route
@@ -137,14 +148,8 @@ const AppRoutes: React.FC = () => {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/leaderboard"
-        element={
-          <ProtectedRoute>
-            <Leaderboard />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/leaderboard" element={<Leaderboard />} />
+      <Route path="/leaderboard-test" element={<LeaderboardTest />} />
       <Route
         path="/settings"
         element={

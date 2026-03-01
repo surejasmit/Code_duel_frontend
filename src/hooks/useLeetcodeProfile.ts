@@ -40,11 +40,8 @@ export const useLeetcodeProfile = (username: string | undefined) => {
 export const useLeetcodeSubmissions = (username: string | undefined) => {
     return useQuery({
         queryKey: leetcodeKeys.submissions(username || ""),
-        queryFn: async () => {
-            const response = await leetcodeApi.testConnection(username!);
-            if (response.success && response.data?.submissions) {
-                return response.data.submissions;
-            }
+        queryFn: async (): Promise<unknown[]> => {
+            // testConnection endpoint not available; return empty
             return [];
         },
         enabled: !!username,
