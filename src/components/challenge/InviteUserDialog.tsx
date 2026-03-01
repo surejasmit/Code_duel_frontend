@@ -81,12 +81,12 @@ const InviteUserDialog: React.FC<InviteUserDialogProps> = ({
         } else {
           setResults([]);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         // Ignore AbortError / Axios cancellation — triggered intentionally when a newer search starts
         const isAbortOrCancel =
           (err instanceof Error &&
             (err.name === "AbortError" || err.name === "CanceledError")) ||
-          (err && (err as any).code === "ERR_CANCELED");
+          (err && (err as { code?: string }).code === "ERR_CANCELED");
         if (!isAbortOrCancel) {
           setResults([]);
         }
@@ -112,11 +112,11 @@ const InviteUserDialog: React.FC<InviteUserDialogProps> = ({
       } else {
         throw new Error(response.message || "Failed to send invite");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Failed to send invite",
         description:
-          error.response?.data?.message || error.message || "Please try again.",
+          (error as { response?: { data?: { message?: string } } }).response?.data?.message || (error as Error).message || "Please try again.",
         variant: "destructive",
       });
     } finally {

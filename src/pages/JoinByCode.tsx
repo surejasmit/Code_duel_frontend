@@ -7,6 +7,17 @@ import Layout from "@/components/layout/Layout";
 import { challengeApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
+interface JoinByCodeResponse {
+    success: boolean;
+    data: {
+        challengeId?: string;
+        challenge?: {
+            id: string;
+            name: string;
+        };
+    };
+}
+
 const JoinByCode: React.FC = () => {
     const { code } = useParams<{ code: string }>();
     const navigate = useNavigate();
@@ -16,7 +27,7 @@ const JoinByCode: React.FC = () => {
         "idle" | "success" | "error"
     >("idle");
     const [errorMessage, setErrorMessage] = useState("");
-    const [challengeData, setChallengeData] = useState<any>(null);
+    const [challengeData, setChallengeData] = useState<JoinByCodeResponse["data"] | null>(null);
 
     const handleJoin = async () => {
         if (!code) return;
@@ -46,10 +57,11 @@ const JoinByCode: React.FC = () => {
                     }
                 }, 2000);
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             setJoinStatus("error");
+            const err = error as { response?: { data?: { message?: string } } };
             const message =
-                error.response?.data?.message || "Failed to join challenge";
+                err.response?.data?.message || "Failed to join challenge";
             setErrorMessage(message);
             toast({
                 title: "Failed to join",

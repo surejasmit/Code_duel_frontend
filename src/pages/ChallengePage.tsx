@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -21,10 +21,15 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+
+import InviteDialog from "@/components/challenge/InviteDialog";
+
 import { Challenge, ChartData, LeaderboardEntry } from "@/types";
 import { getErrorMessage } from "@/lib/utils";
+import { useRealTimeDuel } from "@/hooks/useRealTimeDuel";
 import { useQueryClient } from "@tanstack/react-query";
 
+// ✅ Centralized React Query hooks — single source of truth
 import {
   useChallenge,
   useChallengeLeaderboard,
@@ -56,6 +61,15 @@ const ChallengePage: React.FC = () => {
 
   const isLoading = challengeLoading || leaderboardLoading;
   const hasError = challengeError || leaderboardError;
+
+  const handleRefresh = useCallback(() => {
+    if (id) {
+      queryClient.invalidateQueries({ queryKey: challengeKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: challengeKeys.leaderboard(id) });
+    }
+  }, [id, queryClient]);
+
+  const { status: realTimeStatus } = useRealTimeDuel(id, handleRefresh);
 
   const chartData: ChartData[] = [];
 
@@ -183,6 +197,20 @@ const ChallengePage: React.FC = () => {
               {challenge.status && (
                 <Badge variant="outline">{challenge.status}</Badge>
               )}
+              <Badge
+                variant={realTimeStatus === "CONNECTED" ? "default" : "secondary"}
+                className={
+                  realTimeStatus === "CONNECTED"
+                    ? "bg-green-500 hover:bg-green-600 text-white"
+                    : ""
+                }
+              >
+                {realTimeStatus === "CONNECTED"
+                  ? "Live"
+                  : realTimeStatus === "POLLING"
+                    ? "Polling"
+                    : "Connecting..."}
+              </Badge>
             </div>
 
             <p className="text-muted-foreground">

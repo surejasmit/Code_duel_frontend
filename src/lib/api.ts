@@ -9,7 +9,25 @@ import type {
   UserSearchResult,
   LeaderboardEntry,
   LeetCodeProfile,
+  TodayStatusResponse,
+  DashboardStats,
+  SessionStatus,
+  ChallengeResponse,
+  DashboardResponse,
 } from "@/types";
+
+export type {
+  User,
+  Challenge,
+  Stats,
+  ActivityData,
+  ChartData,
+  ChallengeInvite,
+  UserSearchResult,
+  DashboardResponse,
+  LeaderboardEntry,
+  LeetCodeProfile,
+};
 
 // API Base URL
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
@@ -67,41 +85,9 @@ export interface LoginResponse {
   token: string;
 }
 
-export interface RegisterResponse extends LoginResponse {}
-
-export interface DashboardResponse {
-  summary: {
-    totalChallenges: number;
-    activeChallenges: number;
-    completedChallenges: number;
-    totalPenalties: number;
-  };
-  activeChallenges: Challenge[];
-  recentActivity: Record<string, unknown>[];
-}
-
-export interface TodayStatusResponse {
-  date: string;
-  challenges: Challenge[];
-  summary: {
-    totalChallenges: number;
-    completed: number;
-    pending: number;
-    failed: number;
-  };
-}
-
-export interface DashboardStats {
-  currentStreak: number;
-  longestStreak: number;
-  totalPenalties: number;
-  totalSubmissions: number;
-}
-
-export interface SessionStatus {
-  isValid: boolean;
-  expiresAt: string;
-}
+// RegisterResponse is intentionally identical to LoginResponse but kept as a separate type
+// for potential future extensions specific to registration
+export type RegisterResponse = LoginResponse;
 
 // AUTH APIs
 export const authApi = {
@@ -207,19 +193,19 @@ export const challengeApi = {
     challengeId: string,
     data: { expiresInHours: number; maxUses: number }
   ) => {
-    const res = await api.post<ApiResponse<any>>(
+    const response = await api.post<ApiResponse<{ code: string; expiresAt: string }>>(
       `/api/challenges/${challengeId}/invite`,
       data
     );
-    return res.data;
+    return response.data;
   },
 
   joinByCode: async (code: string) => {
-    const res = await api.post<ApiResponse<any>>(
+    const response = await api.post<ApiResponse<{ challengeId: string; challenge?: { id: string; name: string } }>>(
       "/api/challenges/join-by-code",
       { code }
     );
-    return res.data;
+    return response.data;
   },
 };
 
