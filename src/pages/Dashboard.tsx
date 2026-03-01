@@ -18,6 +18,7 @@ import { Stats, Challenge, ActivityData, ChartData, Achievement, UserTierProgres
 import JoinByCodeDialog from "@/components/challenge/JoinByCodeDialog";
 import { TierBadge, RecentAchievements, NextAchievements, ProgressToTier } from "@/components/gamification";
 import { mockAchievements, calculateUserTierProgress, mockUserPoints } from "@/data/mockData";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
