@@ -47,17 +47,7 @@ const Profile: React.FC = () => {
     calculateUserTierProgress(mockUserPoints)
   );
 
-<<<<<<< HEAD
-  useEffect(() => {
-    const abortController = new AbortController();
-    loadProfileData(abortController.signal);
-    return () => abortController.abort();
-  }, []);
-
-  const loadProfileData = async (signal: AbortSignal) => {
-=======
   const loadProfileData = useCallback(async () => {
->>>>>>> e74b5527e3953bdfa56db7ed5c848afff79ef3bd
     setIsLoading(true);
     try {
       // Load user profile
@@ -76,16 +66,10 @@ const Profile: React.FC = () => {
             setLeetcodeProfile(leetcodeResponse.data);
           }
         } catch (error) {
-          if (signal.aborted) return;
           console.error("Failed to load LeetCode profile:", error);
         }
       }
-<<<<<<< HEAD
-    } catch (error: any) {
-      if (signal.aborted) return;
-=======
     } catch (error: unknown) {
->>>>>>> e74b5527e3953bdfa56db7ed5c848afff79ef3bd
       console.error("Failed to load profile:", error);
       toast({
         title: "Failed to load profile",
@@ -93,7 +77,7 @@ const Profile: React.FC = () => {
         variant: "destructive",
       });
     } finally {
-      if (!signal.aborted) setIsLoading(false);
+      setIsLoading(false);
     }
   }, [user?.leetcodeUsername, toast]);
 
