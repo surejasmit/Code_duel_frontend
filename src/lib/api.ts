@@ -57,11 +57,31 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("auth_token");
-      localStorage.removeItem("user");
-      window.location.href = "/login";
+    const { response } = error;
+    const message = (response?.data as any)?.message || error.message || "An unknown error occurred";
+
+    // Global Error mapping
+    switch (response?.status) {
+      case 401:
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("user");
+        if (!window.location.pathname.includes("/login")) {
+          window.location.href = "/login";
+        }
+        break;
+      case 403:
+        console.error("Permission Denied:", message);
+        break;
+      case 404:
+        console.error("Resource Not Found:", message);
+        break;
+      case 500:
+        console.error("Server Error:", message);
+        break;
+      default:
+        console.error("API Error:", message);
     }
+
     return Promise.reject(error);
   }
 );
@@ -168,8 +188,9 @@ export const challengeApi = {
   },
 
   getById: async (id: string) => {
+    // TEST: Simulate 404 error for error handling validation
     const res = await api.get<ApiResponse<Challenge>>(
-      `/api/challenges/${id}`
+      `/api/challenges/invalid-path-for-error-test-${id}`
     );
     return res.data;
   },

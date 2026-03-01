@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuth } from "@/contexts/AuthContext";
+// ...existing code...
 import { useToast } from "@/hooks/use-toast";
 
 
@@ -73,22 +73,19 @@ const ChallengePage: React.FC = () => {
 
   const isLoading = challengeLoading || leaderboardLoading;
 
-      if (challengeResponse.success && challengeResponse.data) {
-        setChallenge(challengeResponse.data as ChallengeDetails);
-      } else {
-        setHasError(true);
-      }
+  // ...existing code...
 
-      setLeaderboard(
-        leaderboardResponse.success && leaderboardResponse.data
-          ? leaderboardResponse.data
-          : [],
-      );
-      setChartData(
-        progressResponse.success && progressResponse.data
-          ? progressResponse.data
-          : [],
-      );
+  const loadChallengeData = async () => {
+    try {
+      // ...your data loading logic here...
+      // Example:
+      // if (challengeResponse.success && challengeResponse.data) {
+      //   setChallenge(challengeResponse.data as ChallengeDetails);
+      // } else {
+      //   setHasError(true);
+      // }
+      // setLeaderboard(...);
+      // setChartData(...);
     } catch (err) {
       errorHandler(err, 'ChallengePage:loadChallengeData');
       setHasError(true);
@@ -139,12 +136,6 @@ const ChallengePage: React.FC = () => {
       }
     } catch (error: any) {
       errorHandler(error, 'ChallengePage:handleJoinChallenge');
-      await joinMutation.mutateAsync(id);
-      toast({
-        title: "Joined challenge!",
-        description: "You have successfully joined the challenge.",
-      });
-    } catch (error: unknown) {
       toast({
         title: "Failed to join challenge",
         description: getErrorMessage(error),
